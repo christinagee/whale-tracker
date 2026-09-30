@@ -8,6 +8,8 @@ import { ALERT_CONFIG } from '../lib/alert'
 import { SPECIES } from '../lib/species'
 import { bearingDeg, buildTracks, freshness, type Track } from '../lib/tracks'
 import { OrcaIcon } from './OrcaIcon'
+import { timeAgo } from '../lib/format'
+import { newestSighting } from '../lib/sightings'
 import '../styles/Map.css'
 
 const STYLE_URL = import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/liberty'
@@ -74,6 +76,8 @@ export function Map({ sightings, selectedId, onSelect, hydrophones, detections, 
     }),
     [tracks, now],
   )
+
+  const latest = newestSighting(sightings)
 
   // Draw oldest first so the newest sightings sit on top.
   const ordered = [...sightings].reverse()
@@ -148,15 +152,16 @@ export function Map({ sightings, selectedId, onSelect, hydrophones, detections, 
         {ordered.map((s) => {
           const isOrca = s.species === 'orca'
           const isSelected = s.id === selectedId
-          const isTrail = trailIds.has(s.id) && !isSelected
-          const opacity = isSelected ? 1 : freshness(s.time, now)
+          const isLatest = s.id === latest?.id
+          const isTrail = trailIds.has(s.id) && !isSelected && !isLatest
+          const opacity = isSelected || isLatest ? 1 : freshness(s.time, now)
           return (
             <Marker
               key={s.id}
               latitude={s.latitude}
               longitude={s.longitude}
               anchor="center"
-              style={{ zIndex: isSelected ? 3 : isTrail ? 0 : isOrca ? 2 : 1 }}
+              style={{ zIndex: isSelected ? 4 : isLatest ? 3 : isTrail ? 0 : isOrca ? 2 : 1 }}
               onClick={(e) => {
                 e.originalEvent.stopPropagation()
                 onSelect(s.id)
@@ -170,7 +175,7 @@ export function Map({ sightings, selectedId, onSelect, hydrophones, detections, 
                 />
               ) : (
                 <button
-                  className={`marker ${isOrca ? 'marker-orca' : ''} ${isSelected ? 'marker-selected' : ''}`}
+                  className={`marker ${isOrca ? 'marker-orca' : ''} ${isSelected ? 'marker-selected' : ''} ${isLatest ? 'marker-latest' : ''}`}
                   style={{ background: SPECIES[s.species].color, opacity }}
                   aria-label={`${s.speciesLabel} sighting`}
                 >
@@ -180,12 +185,18 @@ export function Map({ sightings, selectedId, onSelect, hydrophones, detections, 
                       {s.pods.map((p) => (p === 'Biggs' ? 'T' : p === 'SRKW' ? 'SR' : p)).join('')}
                     </span>
                   )}
+                  {isLatest && <span className="latest-label">Latest · {timeAgo(s.time)}</span>}
                 </button>
               )}
             </Marker>
           )
         })}
       </MapGL>
+      {latest && (
+        <button className="latest-button" onClick={() => onSelect(latest.id)}>
+          <span className="latest-dot" /> Latest sighting
+        </button>
+      )}
       <div className="map-key">
         <span><span className="key-fade" /> Faded = older report</span>
         <span><span className="key-path" /> Path of the same group</span>

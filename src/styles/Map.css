@@ -44,6 +44,7 @@
 }
 
 .map-key {
+  z-index: 5;
   position: absolute; left: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 3px;
   padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.9); box-shadow: 0 1px 4px rgba(0,0,0,0.2);
   font-size: 0.72rem; color: #334155; pointer-events: none;
@@ -51,3 +52,25 @@
 .map-key > span { display: flex; align-items: center; gap: 6px; }
 .key-fade { width: 10px; height: 10px; border-radius: 50%; background: #0f172a; opacity: 0.35; }
 .key-path { width: 18px; border-top: 3px dashed #0369a1; }
+
+/* The newest report: pulsing ring and a label. */
+.marker-latest { box-shadow: 0 0 0 3px #facc15, 0 2px 6px rgba(0,0,0,0.4); }
+.marker-latest::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 3px solid #facc15; animation: latest-ring 1.8s ease-out infinite; pointer-events: none;
+}
+@keyframes latest-ring { from { transform: scale(0.9); opacity: 1; } to { transform: scale(1.9); opacity: 0; } }
+.latest-label {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+  background: #0b2545; color: #fff; font-size: 0.7rem; font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3); pointer-events: none;
+}
+.latest-button {
+  z-index: 5;
+  position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border: 0; border-radius: 999px; background: #fff; color: #0b2545;
+  font-size: 0.8rem; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.latest-button:hover { background: #fef9c3; }
+.latest-dot { width: 9px; height: 9px; border-radius: 50%; background: #facc15; box-shadow: 0 0 0 2px #0b2545; }

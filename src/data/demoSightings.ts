@@ -36,5 +36,7 @@ export function makeDemoSightings(): Sighting[] {
       },
       i,
     ),
-  ).filter((s): s is Sighting => s !== null)
+  )
+    .filter((s): s is Sighting => s !== null)
+    .sort((a, b) => b.time.getTime() - a.time.getTime())
 }

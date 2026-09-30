@@ -71,3 +71,8 @@ export function parseSightingRows(body: unknown): Sighting[] {
     .filter((s): s is Sighting => s !== null)
     .sort((a, b) => b.time.getTime() - a.time.getTime())
 }
+
+/** The most recent report, whatever order the list is in. */
+export function newestSighting<T extends { time: Date }>(sightings: T[]): T | undefined {
+  return sightings.reduce<T | undefined>((best, s) => (!best || s.time > best.time ? s : best), undefined)
+}

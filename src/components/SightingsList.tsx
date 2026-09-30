@@ -1,6 +1,7 @@
 import type { Sighting } from '../api/acartia'
 import { SPECIES } from '../lib/species'
 import { timeAgo } from '../lib/format'
+import { newestSighting } from '../lib/sightings'
 import { OrcaIcon } from './OrcaIcon'
 import { PodBadges } from './PodBadges'
 import '../styles/SightingsList.css'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function SightingsList({ sightings, onSelect }: Props) {
+  const latestId = newestSighting(sightings)?.id
   if (sightings.length === 0) {
     return <p className="empty">No sightings match these filters right now. Try a longer time range.</p>
   }
@@ -27,6 +29,7 @@ export function SightingsList({ sightings, onSelect }: Props) {
                 {SPECIES[s.species].label}
                 {s.count ? <span className="sighting-count"> × {s.count}</span> : null}
                 <PodBadges pods={s.pods} />
+                {s.id === latestId && <span className="latest-badge">Latest</span>}
               </span>
               {s.comments && <span className="sighting-comment">{s.comments}</span>}
             </span>

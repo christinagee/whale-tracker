@@ -17,3 +17,7 @@
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .sighting-time { flex-shrink: 0; font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+.latest-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; vertical-align: 1px;
+  background: #facc15; color: #422006; font-size: 0.68rem; font-weight: 800;
+}
