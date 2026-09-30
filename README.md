@@ -1,140 +1,73 @@
 # 🐋 Whale Tracker
 
-Real-time whale sighting tracker for the Salish Sea. Built with React, MapLibre, and Acartia data.
-
-**Website:** [whale-tracker.vercel.app](https://whale-tracker.vercel.app)
+Whale and orca sightings in the Salish Sea, on a map. Built with React, MapLibre, and data from the [Acartia](https://acartia.io) data cooperative.
 
 ## Features
 
-✅ Real-time whale sightings from Acartia API  
-✅ Interactive map with species color-coding  
-✅ Recent sightings feed  
-✅ Detailed sighting information  
-✅ Auto-refresh every 30 seconds  
-✅ Fully responsive (desktop, tablet, mobile)  
-✅ No backend required  
+- Interactive map with color-coded species. Orcas get their own markers labeled by pod (J, K, L, T for Bigg's).
+- Filters for all whales, orcas only, or a single pod, over 24 hours, 3 days, 7 days, or everything.
+- Recent sightings list and a detail view for each sighting.
+- **Meet the pods**: a guide to J, K and L pods and Bigg's killer whales, with a link to each pod's latest sighting.
+- Refreshes every minute. Works on desktop and phone.
+- Shows sample sightings when live data isn't available, such as during local development.
 
-## Quick Start
+## Viewing changes without installing anything
 
-### Local Development
+Connect the repo to Vercel (see [DEPLOY.md](./DEPLOY.md)). Each branch you push gets its own preview link, and the main site only updates when `main` changes.
+
+## Local development (optional)
+
+Needs [Node.js](https://nodejs.org) 18 or newer.
 
 ```bash
-# Install dependencies
 npm install
-
-# Run dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm preview
+npm run dev        # http://localhost:5173
+npm run build      # production build into dist/
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Locally the app shows sample sightings, because the live feed runs through a Vercel function (`api/sightings.ts`).
 
-### Deploy to Vercel
-
-See [DEPLOY.md](./DEPLOY.md) for step-by-step instructions.
-
-TL;DR:
-1. Push to GitHub
-2. Import repo in Vercel
-3. Done! 🚀
-
-## Project Structure
+## How live data works
 
 ```
+browser ──> /api/sightings (Vercel function) ──> https://acartia.io/api/v1/sightings/current
+```
+
+The function adds your Acartia API token (the `ACARTIA_TOKEN` environment variable in Vercel) so the token never reaches the browser. It also caches responses for a minute. If the feed fails, the app switches to sample data and shows a "Sample data" badge.
+
+## Environment variables
+
+Set these in Vercel → Project → Settings → Environment Variables. See `.env.example`.
+
+| Name | Required | What it's for |
+| --- | --- | --- |
+| `ACARTIA_TOKEN` | For live data | API token from your account at acartia.io |
+| `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
+
+## Project structure
+
+```
+api/sightings.ts                 # Vercel function that proxies Acartia
+public/whale.svg                 # favicon
 src/
-├── api/acartia.ts              # Acartia API client
+├── api/acartia.ts               # fetch + normalize sightings, sample-data fallback
 ├── components/
-│   ├── Map.tsx                 # MapLibre map
-│   ├── SightingsList.tsx        # Recent sightings
-│   └── SightingDetail.tsx       # Detail view
-├── hooks/useSightings.ts        # TanStack Query hooks
-├── styles/                      # Component CSS
-├── App.tsx                      # Main app
-└── main.tsx                     # React entry point
+│   ├── Map.tsx                  # MapLibre map and markers
+│   ├── SightingsList.tsx        # recent sightings
+│   ├── SightingDetail.tsx       # one sighting
+│   ├── PodGuide.tsx             # "Meet the pods"
+│   ├── PodBadges.tsx, OrcaIcon.tsx
+├── data/demoSightings.ts        # sample sightings
+├── hooks/useSightings.ts        # TanStack Query (auto-refresh)
+├── lib/species.ts               # species colors, orca pod detection, pod info
+├── lib/format.ts                # "2 hr ago" etc.
+├── styles/                      # CSS per component
+├── App.tsx
+└── main.tsx
 ```
 
-## Tech Stack
+## Ideas for later
 
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **MapLibre GL** - Interactive maps
-- **TanStack Query** - Data fetching & caching
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and update:
-
-```env
-VITE_ACARTIA_API_URL=https://acartia.io/api/v1
-VITE_MAPLIBRE_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
-VITE_POLLING_INTERVAL=30000
-VITE_DEBUG=false
-```
-
-No API keys required for read-only access.
-
-## API
-
-Data sourced from **Acartia Data Cooperative**, which aggregates:
-- Orca Network sightings (vetted by experts)
-- Community science observations
-- Historical whale data
-
-### Endpoints Used
-
-- `GET /sightings/current` - All current sightings
-- `GET /sightings/trusted` - Orca Network verified only
-- `GET /sightings/:id` - Specific sighting details
-
-[Acartia API Docs](https://github.com/salish-sea/acartia)
-
-## Roadmap
-
-### V1 (MVP) ✅
-- Real-time sightings map
-- Sighting detail view
-- Recent sightings feed
-
-### V2 (Coming Soon)
-- [ ] Push notifications
-- [ ] Species filters
-- [ ] Time range filtering
-- [ ] Sighting history
-- [ ] Export as CSV
-
-### V3 (Future)
-- [ ] Mobile app (React Native/Expo)
-- [ ] User accounts
-- [ ] Saved locations
-- [ ] Dark mode
-
-## Contributing
-
-Have ideas for improvements? Issues and PRs welcome!
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT - Feel free to use this project for anything!
-
-## Acknowledgments
-
-- [Orca Network](https://orcanetwork.org) - Whale sighting data
-- [Acartia](https://acartia.io) - Data cooperative
-- [MapLibre](https://maplibre.org) - Open-source maps
-- [Vercel](https://vercel.com) - Hosting
-
----
-
-**Made with 🐋 by Christina**
-
-Questions? Email or open an issue on GitHub.
+- Notifications when a favorite pod is reported
+- "Near me" distance to each sighting
+- Dark mode
