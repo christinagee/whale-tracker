@@ -4,14 +4,21 @@ import type { Sighting } from '../api/acartia'
 import type { Detection, Hydrophone } from '../api/orcasound'
 import { isRecent, latestWhaleDetection } from '../lib/hydrophones'
 import { HeadphonesIcon } from './HeadphonesIcon'
+import { ALERT_CONFIG } from '../lib/alert'
 import { SPECIES } from '../lib/species'
 import { OrcaIcon } from './OrcaIcon'
 import '../styles/Map.css'
 
 const STYLE_URL = import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/liberty'
 
-// Centered on the San Juan Islands.
-const INITIAL_VIEW = { latitude: 48.45, longitude: -123.0, zoom: 7.6 }
+// From the San Juan Islands down to Seattle and Tacoma.
+const INITIAL_VIEW = {
+  bounds: [
+    [-123.35, 47.25],
+    [-122.2, 48.75],
+  ] as [[number, number], [number, number]],
+  fitBoundsOptions: { padding: 20 },
+}
 
 interface Props {
   sightings: Sighting[]
@@ -44,6 +51,11 @@ export function Map({ sightings, selectedId, onSelect, hydrophones, detections, 
     <div className="map-wrap">
       <MapGL ref={mapRef} initialViewState={INITIAL_VIEW} mapStyle={STYLE_URL} style={{ width: '100%', height: '100%' }}>
         <NavigationControl position="top-right" showCompass={false} />
+        <Marker latitude={ALERT_CONFIG.home.latitude} longitude={ALERT_CONFIG.home.longitude} anchor="center">
+          <span className="home-marker" title={`${ALERT_CONFIG.home.name}: the alert measures distance from here`}>
+            ★ {ALERT_CONFIG.home.name}
+          </span>
+        </Marker>
         {hydrophones.map((h) => {
           const hot = isRecent(latestWhaleDetection(detections, h.id))
           const on = h.id === playingHydrophoneId

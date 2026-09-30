@@ -1,4 +1,4 @@
-import { normalizeSighting, type Sighting } from '../api/acartia'
+import { normalizeSighting, type Sighting } from '../lib/sightings'
 
 const HOUR = 60 * 60 * 1000
 

@@ -5,6 +5,8 @@ import { useLiveAudio } from './hooks/useLiveAudio'
 import { ListenPanel } from './components/ListenPanel'
 import { HeadphonesIcon } from './components/HeadphonesIcon'
 import { isRecent, latestWhaleDetection } from './lib/hydrophones'
+import { computeAlert } from './lib/alert'
+import { AlertBanner } from './components/AlertBanner'
 import { Map } from './components/Map'
 import { SightingsList } from './components/SightingsList'
 import { SightingDetail } from './components/SightingDetail'
@@ -66,6 +68,12 @@ export default function App() {
     .filter((x) => isRecent(x.d))
     .sort((a, b) => b.d!.time.getTime() - a.d!.time.getTime())[0]
 
+  // Same logic as /api/alert (what the whale lamp shows). Sample data never triggers it.
+  const alert = useMemo(
+    () => computeAlert(data?.live ? all : [], detections, hydrophones),
+    [data?.live, all, detections, hydrophones],
+  )
+
   const openHydrophone = (id: string) => {
     setFocusedHydrophoneId(id)
     setTab('listen')
@@ -92,6 +100,17 @@ export default function App() {
           {isLoading ? 'Loading…' : data?.live ? `Live · updated ${timeAgo(new Date(dataUpdatedAt))}` : 'Sample data'}
         </div>
       </header>
+
+      <AlertBanner
+        alert={alert}
+        onOpen={() => {
+          if (alert.sightingId) {
+            setRangeHours(Infinity)
+            setFilter('all')
+            select(alert.sightingId)
+          } else if (alert.hydrophoneId) openHydrophone(alert.hydrophoneId)
+        }}
+      />
 
       <main className="app-body">
         <section className="map-pane">
