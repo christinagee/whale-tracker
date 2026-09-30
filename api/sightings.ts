@@ -1,6 +1,7 @@
 // Vercel serverless function: GET /api/sightings
-// Fetches current sightings from Acartia on the server so the API token stays
-// secret and the browser doesn't hit cross-origin (CORS) restrictions.
+// Fetches Acartia's public current-sightings feed (last 7 days) on the server so
+// the browser doesn't hit cross-origin (CORS) restrictions. ACARTIA_TOKEN is
+// optional and, if set, never reaches the browser.
 
 const ACARTIA_URL = 'https://acartia.io/api/v1/sightings/current'
 

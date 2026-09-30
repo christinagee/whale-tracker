@@ -123,7 +123,7 @@ export default function App() {
               )}
               {!data?.live && !isLoading && (
                 <p className="sample-note">
-                  Showing sample sightings. Live data appears once the site is deployed with an Acartia token.
+                  Showing sample sightings. Live sightings appear on the deployed site (they can't load when running locally).
                 </p>
               )}
               <SightingsList sightings={visible} onSelect={select} />

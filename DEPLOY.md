@@ -11,16 +11,21 @@ You can do all of this in a web browser. Nothing needs to be installed.
 
 After about a minute you get a link like `https://whale-tracker-xxxx.vercel.app`.
 
-## 2. Turn on live sightings
+## 2. Check that live sightings are showing
 
-Until this step the site shows sample sightings, with a "Sample data" badge.
+No setup is needed. Acartia's "current sightings" feed (the last 7 days) is open to everyone, so the deployed site loads real data on its own.
 
-1. Create an account at [acartia.io](https://acartia.io) and generate an API token in your account settings.
-2. In Vercel open your project → **Settings → Environment Variables**.
-3. Add `ACARTIA_TOKEN` with your token as the value (for Production and Preview).
-4. Go to **Deployments**, open the ⋯ menu on the latest one, and click **Redeploy**.
+- Open your Vercel link. The badge in the top-right corner should read **Live · updated just now**.
+- If it says **Sample data**, see Troubleshooting below.
 
-The badge in the top-right corner should now read **Live**.
+### Optional: add an Acartia token
+
+The site works without one. A token only helps if Acartia starts requiring one later or you want to use its registered-user features.
+
+1. Click **Register** at [acartia.io](https://acartia.io) and fill in the form. An administrator reviews new accounts, so approval can take a while.
+2. Once approved, log in. Under **Your Active Tokens** there is a token named **Default**. Copy it.
+3. In Vercel open your project → **Settings → Environment Variables**. Add a variable named `ACARTIA_TOKEN`, paste the token as the value, and tick Production and Preview.
+4. Go to **Deployments**, open the ⋯ menu on the latest deployment, and click **Redeploy**.
 
 ## 3. Preview changes before they go live
 
@@ -36,5 +41,5 @@ Vercel → Project → **Settings → Domains** → add a domain you own and fol
 ## Troubleshooting
 
 - **Build failed**: open the failed deployment in Vercel and read the build log.
-- **Still says "Sample data"**: check that `ACARTIA_TOKEN` is set and that you redeployed afterwards. Then visit `/api/sightings` on your site. If you see an error message there, it explains what Acartia returned (for example 401 means the token is wrong).
+- **Says "Sample data" on the deployed site**: visit `your-site.vercel.app/api/sightings`. A long list of sightings means the data is fine; reload the main page. An error message there says what Acartia returned. If Acartia is down, the site automatically switches back to live data once it recovers. If the error is 401 or 403, add a token (see the optional step above).
 - **Map is blank**: the map style server may be down. Set `VITE_MAP_STYLE_URL` to a different MapLibre style URL and redeploy.

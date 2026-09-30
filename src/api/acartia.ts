@@ -29,30 +29,40 @@ const num = (v: unknown) => {
   return Number.isFinite(n) ? n : null
 }
 
+/** Acartia sends times like "2025-02-14 21:49:00" in UTC, with no time zone marker. */
+function parseTime(value: unknown): Date {
+  const text = str(value).trim()
+  const iso = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(text) ? `${text.replace(' ', 'T')}Z` : text
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? new Date() : date
+}
+
 export function normalizeSighting(raw: RawSighting, index: number): Sighting | null {
   const latitude = num(raw.latitude ?? raw.lat)
   const longitude = num(raw.longitude ?? raw.lon ?? raw.lng)
   if (latitude === null || longitude === null) return null
 
   const speciesLabel = str(raw.type ?? raw.species) || 'Unknown'
-  const comments = str(raw.comments ?? raw.notes ?? raw.description)
-  const timeValue = raw.created ?? raw.timestamp ?? raw.time ?? raw.date
-  const time = timeValue ? new Date(str(timeValue)) : new Date()
+  let comments = str(raw.data_source_comments ?? raw.comments).trim()
+  // Comments often start with the reporting organization in brackets, e.g. "[Orca Network] J pod, northbound".
+  const bracketed = comments.match(/^\[([^\]]+)\]\s*/)
+  if (bracketed) comments = comments.slice(bracketed[0].length)
+  const profile = raw.profile as { name?: unknown } | undefined
 
   const pods = detectPods(`${speciesLabel} ${comments}`)
   const species = pods.length > 0 ? 'orca' : classifySpecies(`${speciesLabel} ${comments}`)
 
   return {
-    id: str(raw.id ?? raw.ssemmi_id) || `sighting-${index}`,
+    id: str(raw.entry_id ?? raw.ssemmi_id ?? raw.id) || `sighting-${index}`,
     species,
     speciesLabel,
     pods,
     latitude,
     longitude,
-    count: num(raw.no_sighted ?? raw.count ?? raw.number_sighted),
-    time: Number.isNaN(time.getTime()) ? new Date() : time,
+    count: num(raw.no_sighted),
+    time: parseTime(raw.created),
     comments,
-    source: str(raw.data_source_name ?? raw.data_source_entity ?? raw.source),
+    source: bracketed?.[1] || str(raw.data_source_entity) || str(profile?.name) || str(raw.data_source_name),
     photoUrl: str(raw.photo_url) || null,
   }
 }

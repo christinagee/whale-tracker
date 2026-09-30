@@ -33,7 +33,7 @@ Locally the app shows sample sightings, because the live feed runs through a Ver
 browser ──> /api/sightings (Vercel function) ──> https://acartia.io/api/v1/sightings/current
 ```
 
-The function adds your Acartia API token (the `ACARTIA_TOKEN` environment variable in Vercel) so the token never reaches the browser. It also caches responses for a minute. If the feed fails, the app switches to sample data and shows a "Sample data" badge.
+Acartia's current-sightings feed (the last 7 days) is public, so no API key is needed. The function avoids browser cross-origin (CORS) problems and caches responses for a minute. If you set an optional `ACARTIA_TOKEN`, it is sent along, and it stays on the server. If the feed fails, the app switches to sample data and shows a "Sample data" badge.
 
 ## Environment variables
 
@@ -41,7 +41,7 @@ Set these in Vercel → Project → Settings → Environment Variables. See `.en
 
 | Name | Required | What it's for |
 | --- | --- | --- |
-| `ACARTIA_TOKEN` | For live data | API token from your account at acartia.io |
+| `ACARTIA_TOKEN` | No | Acartia API token, only if Acartia starts requiring one |
 | `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
 
 ## Project structure
