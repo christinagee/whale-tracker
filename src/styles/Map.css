@@ -32,3 +32,22 @@
   display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
   background: #fff; color: #0b2545; border: 1.5px solid #0b2545; box-shadow: 0 1px 3px rgba(0,0,0,0.3); white-space: nowrap;
 }
+
+.marker-trail {
+  width: 10px; height: 10px; padding: 0; border-radius: 50%;
+  border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.path-arrow {
+  display: block; width: 0; height: 0;
+  border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 11px solid;
+  filter: drop-shadow(0 0 1.5px #fff);
+}
+
+.map-key {
+  position: absolute; left: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 3px;
+  padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.9); box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  font-size: 0.72rem; color: #334155; pointer-events: none;
+}
+.map-key > span { display: flex; align-items: center; gap: 6px; }
+.key-fade { width: 10px; height: 10px; border-radius: 50%; background: #0f172a; opacity: 0.35; }
+.key-path { width: 18px; border-top: 3px dashed #0369a1; }
