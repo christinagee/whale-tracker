@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useSightings } from './hooks/useSightings'
+import { useDetections, useHydrophones } from './hooks/useHydrophones'
+import { useLiveAudio } from './hooks/useLiveAudio'
+import { ListenPanel } from './components/ListenPanel'
+import { HeadphonesIcon } from './components/HeadphonesIcon'
+import { isRecent, latestWhaleDetection } from './lib/hydrophones'
 import { Map } from './components/Map'
 import { SightingsList } from './components/SightingsList'
 import { SightingDetail } from './components/SightingDetail'
@@ -9,7 +14,7 @@ import { timeAgo } from './lib/format'
 import type { PodKey } from './lib/species'
 
 type SpeciesFilter = 'all' | 'orca' | PodKey
-type Tab = 'sightings' | 'pods'
+type Tab = 'sightings' | 'listen' | 'pods'
 
 const RANGES = [
   { label: '24 hrs', hours: 24 },
@@ -33,6 +38,12 @@ export default function App() {
   const [rangeHours, setRangeHours] = useState(72)
   const [tab, setTab] = useState<Tab>('sightings')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [focusedHydrophoneId, setFocusedHydrophoneId] = useState<string | null>(null)
+  const hydrophonesQuery = useHydrophones()
+  const detectionsQuery = useDetections()
+  const audio = useLiveAudio()
+  const hydrophones = hydrophonesQuery.data ?? []
+  const detections = detectionsQuery.data ?? []
 
   const all = data?.sightings ?? []
 
@@ -48,6 +59,17 @@ export default function App() {
 
   const selected = all.find((s) => s.id === selectedId) ?? null
   const orcaCount = visible.filter((s) => s.species === 'orca').length
+
+  // The most recent hydrophone with whale sounds reported in the last couple of hours.
+  const hotHydrophone = hydrophones
+    .map((h) => ({ h, d: latestWhaleDetection(detections, h.id) }))
+    .filter((x) => isRecent(x.d))
+    .sort((a, b) => b.d!.time.getTime() - a.d!.time.getTime())[0]
+
+  const openHydrophone = (id: string) => {
+    setFocusedHydrophoneId(id)
+    setTab('listen')
+  }
 
   const select = (id: string) => {
     setSelectedId(id)
@@ -73,7 +95,15 @@ export default function App() {
 
       <main className="app-body">
         <section className="map-pane">
-          <Map sightings={visible} selectedId={selectedId} onSelect={select} />
+          <Map
+            sightings={visible}
+            selectedId={selectedId}
+            onSelect={select}
+            hydrophones={hydrophones}
+            detections={detections}
+            playingHydrophoneId={audio.playingId}
+            onSelectHydrophone={openHydrophone}
+          />
         </section>
 
         <aside className="side-pane">
@@ -81,12 +111,24 @@ export default function App() {
             <button role="tab" aria-selected={tab === 'sightings'} onClick={() => setTab('sightings')}>
               Sightings <span className="tab-count">{visible.length}</span>
             </button>
+            <button role="tab" aria-selected={tab === 'listen'} onClick={() => setTab('listen')}>
+              Listen live {audio.playingId && <span className="live-dot tab-live" />}
+            </button>
             <button role="tab" aria-selected={tab === 'pods'} onClick={() => setTab('pods')}>
-              Meet the pods
+              Pods
             </button>
           </div>
 
-          {tab === 'pods' ? (
+          {tab === 'listen' ? (
+            <ListenPanel
+              hydrophones={hydrophonesQuery.data}
+              detections={detections}
+              loading={hydrophonesQuery.isLoading}
+              failed={hydrophonesQuery.isError}
+              focusedId={focusedHydrophoneId}
+              audio={audio}
+            />
+          ) : tab === 'pods' ? (
             <PodGuide sightings={all} onSelect={select} />
           ) : selected ? (
             <SightingDetail sighting={selected} onBack={() => setSelectedId(null)} />
@@ -116,6 +158,14 @@ export default function App() {
                   ))}
                 </div>
               </div>
+              {hotHydrophone && (
+                <button className="heard-callout" onClick={() => openHydrophone(hotHydrophone.h.id)}>
+                  <HeadphonesIcon size={16} />
+                  <span>
+                    Whale sounds heard at <strong>{hotHydrophone.h.name}</strong> {timeAgo(hotHydrophone.d!.time)}. Listen live →
+                  </span>
+                </button>
+              )}
               {orcaCount > 0 && filter === 'all' && (
                 <p className="orca-callout">
                   <OrcaIcon size={16} /> {orcaCount} orca {orcaCount === 1 ? 'sighting' : 'sightings'} in this period

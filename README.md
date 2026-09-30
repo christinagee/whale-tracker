@@ -7,6 +7,7 @@ Whale and orca sightings in the Salish Sea, on a map. Built with React, MapLibre
 - Interactive map with color-coded species. Orcas get their own markers labeled by pod (J, K, L, T for Bigg's).
 - Filters for all whales, orcas only, or a single pod, over 24 hours, 3 days, 7 days, or everything.
 - Recent sightings list and a detail view for each sighting.
+- **Listen live**: hydrophones (underwater microphones) from [Orcasound](https://live.orcasound.net) appear on the map. You can play any of them live in the app, and a hydrophone pulses when listeners or Orcasound's AI detector report whale sounds there in the last two hours.
 - **Meet the pods**: a guide to J, K and L pods and Bigg's killer whales, with a link to each pod's latest sighting.
 - Refreshes every minute. Works on desktop and phone.
 - Shows sample sightings when live data isn't available, such as during local development.
@@ -33,7 +34,9 @@ Locally the app shows sample sightings, because the live feed runs through a Ver
 browser ──> /api/sightings (Vercel function) ──> https://acartia.io/api/v1/sightings/current
 ```
 
-Acartia's current-sightings feed (the last 7 days) is public, so no API key is needed. The function avoids browser cross-origin (CORS) problems and caches responses for a minute. If you set an optional `ACARTIA_TOKEN`, it is sent along, and it stays on the server. If the feed fails, the app switches to sample data and shows a "Sample data" badge.
+Acartia's current-sightings feed (the last 7 days) is public, so no API key is needed. The function avoids browser cross-origin (CORS) problems and caches responses for a minute. If you set an optional `ACARTIA_TOKEN`, it is sent along, and it stays on the server. Hydrophone locations, recent whale-sound reports, and the live audio come straight from Orcasound's public API (`src/api/orcasound.ts`). No key is needed.
+
+If the feed fails, the app switches to sample data and shows a "Sample data" badge.
 
 ## Environment variables
 
@@ -51,14 +54,17 @@ api/sightings.ts                 # Vercel function that proxies Acartia
 public/whale.svg                 # favicon
 src/
 ├── api/acartia.ts               # fetch + normalize sightings, sample-data fallback
+├── api/orcasound.ts             # hydrophones, whale-sound reports, live stream URLs
 ├── components/
 │   ├── Map.tsx                  # MapLibre map and markers
 │   ├── SightingsList.tsx        # recent sightings
 │   ├── SightingDetail.tsx       # one sighting
 │   ├── PodGuide.tsx             # "Meet the pods"
+│   ├── ListenPanel.tsx          # "Listen live" hydrophones
 │   ├── PodBadges.tsx, OrcaIcon.tsx
 ├── data/demoSightings.ts        # sample sightings
 ├── hooks/useSightings.ts        # TanStack Query (auto-refresh)
+├── hooks/useHydrophones.ts, useLiveAudio.ts
 ├── lib/species.ts               # species colors, orca pod detection, pod info
 ├── lib/format.ts                # "2 hr ago" etc.
 ├── styles/                      # CSS per component

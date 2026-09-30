@@ -55,8 +55,8 @@ a { color: var(--sea); }
 
 .tabs { display: flex; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--card); z-index: 1; }
 .tabs button {
-  flex: 1; padding: 12px; border: 0; background: none; color: var(--muted); font-weight: 600;
-  border-bottom: 2px solid transparent;
+  flex: 1; padding: 12px 6px; border: 0; background: none; color: var(--muted); font-weight: 600;
+  border-bottom: 2px solid transparent; white-space: nowrap; font-size: 0.92rem;
 }
 .tabs button[aria-selected='true'] { color: var(--accent); border-bottom-color: var(--accent); }
 .tab-count { font-size: 0.75rem; background: var(--foam); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
@@ -75,6 +75,13 @@ a { color: var(--sea); }
   display: flex; align-items: center; gap: 6px; margin: 8px 16px 0; padding: 8px 10px;
   background: #f1f5f9; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
 }
+.heard-callout {
+  display: flex; align-items: center; gap: 8px; width: calc(100% - 32px); margin: 8px 16px 0; padding: 9px 11px;
+  border: 1px solid #5eead4; border-radius: 8px; background: #f0fdfa; color: #134e4a;
+  font-size: 0.85rem; text-align: left;
+}
+.heard-callout:hover { background: #ccfbf1; }
+.tab-live { display: inline-block; margin-left: 4px; vertical-align: 1px; }
 .sample-note {
   margin: 8px 16px 0; padding: 8px 10px; border-radius: 8px; font-size: 0.8rem;
   background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
