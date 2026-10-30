@@ -15,7 +15,18 @@ import { ageMinutes, boatStatus, STALE_MIN, type Boat, type Gathering } from '..
 import '../styles/Map.css'
 import '../styles/Boats.css'
 
-const STYLE_URL = import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/liberty'
+// Try other OpenFreeMap styles by adding ?map=positron (or bright, dark, fiord) to the address.
+const STYLES = ['liberty', 'positron', 'bright', 'dark', 'fiord']
+function styleUrl(): string {
+  try {
+    const choice = new URLSearchParams(window.location.search).get('map')?.toLowerCase()
+    if (choice && STYLES.includes(choice)) return `https://tiles.openfreemap.org/styles/${choice}`
+  } catch {
+    // fall through to the default
+  }
+  return import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/liberty'
+}
+const STYLE_URL = styleUrl()
 
 // From the San Juan Islands down to Seattle and Tacoma.
 const INITIAL_VIEW = {
