@@ -89,7 +89,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand">
           <span className="brand-icon">
-            <OrcaIcon size={26} />
+            <OrcaIcon size={34} />
           </span>
           <div>
             <h1>Whale Tracker</h1>
@@ -187,7 +187,7 @@ export default function App() {
               )}
               {orcaCount > 0 && filter === 'all' && (
                 <p className="orca-callout">
-                  <OrcaIcon size={16} /> {orcaCount} orca {orcaCount === 1 ? 'sighting' : 'sightings'} in this period
+                  <OrcaIcon size={22} /> {orcaCount} orca {orcaCount === 1 ? 'sighting' : 'sightings'} in this period
                 </p>
               )}
               {!data?.live && !isLoading && (

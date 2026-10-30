@@ -8,7 +8,7 @@
   flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 26px; margin-top: 1px;
   border-radius: 50%; color: #fff;
 }
-.sighting-dot svg ellipse { fill: #0f172a; }
+.sighting-dot-orca { width: 32px; height: 32px; margin-top: -2px; background: #fff; border: 1.5px solid var(--line); }
 .sighting-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .sighting-title { font-weight: 600; }
 .sighting-count { font-weight: 400; color: var(--muted); }

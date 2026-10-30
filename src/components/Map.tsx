@@ -179,7 +179,7 @@ export function Map({ sightings, selectedId, onSelect, hydrophones, detections, 
                   style={{ background: SPECIES[s.species].color, opacity }}
                   aria-label={`${s.speciesLabel} sighting`}
                 >
-                  {isOrca ? <OrcaIcon size={20} /> : null}
+                  {isOrca ? <OrcaIcon size={30} /> : null}
                   {isOrca && s.pods.length > 0 && (
                     <span className="marker-pod">
                       {s.pods.map((p) => (p === 'Biggs' ? 'T' : p === 'SRKW' ? 'SR' : p)).join('')}

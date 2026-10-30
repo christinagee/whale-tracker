@@ -21,8 +21,11 @@ export function SightingsList({ sightings, onSelect }: Props) {
       {sightings.map((s) => (
         <li key={s.id}>
           <button className="sighting-row" onClick={() => onSelect(s.id)}>
-            <span className="sighting-dot" style={{ background: SPECIES[s.species].color }}>
-              {s.species === 'orca' && <OrcaIcon size={16} />}
+            <span
+              className={`sighting-dot ${s.species === 'orca' ? 'sighting-dot-orca' : ''}`}
+              style={s.species === 'orca' ? undefined : { background: SPECIES[s.species].color }}
+            >
+              {s.species === 'orca' && <OrcaIcon size={26} />}
             </span>
             <span className="sighting-main">
               <span className="sighting-title">
