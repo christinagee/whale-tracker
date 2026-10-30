@@ -79,6 +79,19 @@ export function Map({
   const mapRef = useRef<MapRef>(null)
   // The key starts folded away on small screens, where it would cover the map.
   const [keyOpen, setKeyOpen] = useState(() => !window.matchMedia('(max-width: 760px)').matches)
+
+  // On small screens MapLibre opens the map credits box until the first touch, covering the
+  // bottom of the map. Fold it to its ⓘ button once the map is ready; tapping ⓘ still opens it.
+  const creditsFolded = useRef(false)
+  const foldCredits = () => {
+    if (creditsFolded.current) return
+    const credits = mapRef.current?.getContainer().querySelector('.maplibregl-ctrl-attrib.maplibregl-compact-show')
+    if (credits) {
+      credits.classList.remove('maplibregl-compact-show')
+      credits.setAttribute('open', '')
+      creditsFolded.current = true
+    }
+  }
   const selected = sightings.find((s) => s.id === selectedId)
 
   useEffect(() => {
@@ -136,7 +149,7 @@ export function Map({
 
   return (
     <div className="map-wrap">
-      <MapGL ref={mapRef} initialViewState={INITIAL_VIEW} mapStyle={STYLE_URL} style={{ width: '100%', height: '100%' }}>
+      <MapGL onLoad={foldCredits} onIdle={foldCredits} ref={mapRef} initialViewState={INITIAL_VIEW} mapStyle={STYLE_URL} style={{ width: '100%', height: '100%' }}>
         <NavigationControl position="top-right" showCompass={false} />
         <Source id="paths" type="geojson" data={paths}>
           <Layer
@@ -273,7 +286,7 @@ export function Map({
               latitude={s.latitude}
               longitude={s.longitude}
               anchor="center"
-              style={{ zIndex: isSelected ? 4 : isLatest ? 3 : isTrail ? 0 : isOrca ? 2 : 1 }}
+              style={{ zIndex: isSelected ? 7 : isLatest ? 6 : isTrail ? 0 : isOrca ? 2 : 1 }}
               onClick={(e) => {
                 e.originalEvent.stopPropagation()
                 onSelect(s.id)
