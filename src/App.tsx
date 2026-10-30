@@ -6,6 +6,10 @@ import { ListenPanel } from './components/ListenPanel'
 import { HeadphonesIcon } from './components/HeadphonesIcon'
 import { isRecent, latestWhaleDetection } from './lib/hydrophones'
 import { computeAlert } from './lib/alert'
+import { useBoats } from './hooks/useBoats'
+import { describePlace, findGatherings } from './lib/boats'
+import { BoatDetail } from './components/BoatDetail'
+import { BoatIcon } from './components/BoatIcon'
 import { AlertBanner } from './components/AlertBanner'
 import { Map } from './components/Map'
 import { SightingsList } from './components/SightingsList'
@@ -49,6 +53,31 @@ export default function App() {
 
   const all = data?.sightings ?? []
 
+  const { boats } = useBoats()
+  const gatherings = useMemo(() => findGatherings(boats), [boats])
+  const [showBoats, setShowBoats] = useState(() => {
+    try {
+      return localStorage.getItem('whale-tracker:show-boats') !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const toggleBoats = () => {
+    setShowBoats((on) => {
+      try {
+        localStorage.setItem('whale-tracker:show-boats', on ? 'off' : 'on')
+      } catch {
+        // remember for this visit only
+      }
+      return !on
+    })
+  }
+  const [selectedBoatId, setSelectedBoatId] = useState<string | null>(null)
+  const [selectedGatheringId, setSelectedGatheringId] = useState<string | null>(null)
+  const selectedBoat = boats.find((b) => b.mmsi === selectedBoatId) ?? null
+  const selectedGathering = gatherings.find((g) => g.id === selectedGatheringId) ?? null
+  const latestGathering = [...gatherings].sort((a, b) => b.time.localeCompare(a.time))[0]
+
   const visible = useMemo(() => {
     const cutoff = Date.now() - rangeHours * 60 * 60 * 1000
     return all.filter((s) => {
@@ -81,7 +110,28 @@ export default function App() {
 
   const select = (id: string) => {
     setSelectedId(id)
+    setSelectedBoatId(null)
+    setSelectedGatheringId(null)
     setTab('sightings')
+  }
+
+  const selectBoat = (mmsi: string) => {
+    setSelectedBoatId(mmsi)
+    setSelectedGatheringId(null)
+    setSelectedId(null)
+    setTab('sightings')
+  }
+
+  const selectGathering = (id: string) => {
+    setSelectedGatheringId(id)
+    setSelectedBoatId(null)
+    setSelectedId(null)
+    setTab('sightings')
+  }
+
+  const clearBoat = () => {
+    setSelectedBoatId(null)
+    setSelectedGatheringId(null)
   }
 
   return (
@@ -122,6 +172,13 @@ export default function App() {
             detections={detections}
             playingHydrophoneId={audio.playingId}
             onSelectHydrophone={openHydrophone}
+            boats={boats}
+            gatherings={gatherings}
+            showBoats={showBoats}
+            onToggleBoats={toggleBoats}
+            selectedBoatId={selectedBoatId}
+            onSelectBoat={selectBoat}
+            onSelectGathering={selectGathering}
           />
         </section>
 
@@ -149,6 +206,8 @@ export default function App() {
             />
           ) : tab === 'pods' ? (
             <PodGuide sightings={all} onSelect={select} />
+          ) : selectedBoat || selectedGathering ? (
+            <BoatDetail boat={selectedBoat} gathering={selectedGathering} onSelectBoat={selectBoat} onBack={clearBoat} />
           ) : selected ? (
             <SightingDetail sighting={selected} onBack={() => setSelectedId(null)} />
           ) : (
@@ -182,6 +241,15 @@ export default function App() {
                   <HeadphonesIcon size={16} />
                   <span>
                     Whale sounds heard at <strong>{hotHydrophone.h.name}</strong> {timeAgo(hotHydrophone.d!.time)}. Listen live →
+                  </span>
+                </button>
+              )}
+              {showBoats && latestGathering && (
+                <button className="boats-callout" onClick={() => selectGathering(latestGathering.id)}>
+                  <BoatIcon size={22} color="#ea580c" />
+                  <span>
+                    <strong>{latestGathering.boats.length} whale-watch boats gathered</strong>{' '}
+                    {describePlace(latestGathering)}, {timeAgo(new Date(latestGathering.time))}. Whales likely nearby →
                   </span>
                 </button>
               )}

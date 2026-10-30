@@ -9,6 +9,7 @@ Whale and orca sightings in the Salish Sea, on a map. Built with React, MapLibre
 - Recent sightings list and a detail view for each sighting.
 - **Listen live**: hydrophones (underwater microphones) from [Orcasound](https://live.orcasound.net) appear on the map. You can play any of them live in the app, and a hydrophone pulses when listeners or Orcasound's AI detector report whale sounds there in the last two hours.
 - **Seattle orca alert**: a banner appears when orcas look to be heading toward Seattle, with an arrival estimate. The same alert is available at `/api/alert` for a lamp or other device.
+- **Whale-watch boats**: live positions of local whale-watching boats (from public AIS data via aisstream.io). Trails show where they've been, docked boats are greyed out, and when 2+ boats slow down together away from harbor the map flags "boats gathered", a sign whales are probably nearby.
 - **Meet the pods**: a guide to J, K and L pods and Bigg's killer whales, with a link to each pod's latest sighting.
 - Refreshes every minute. Works on desktop and phone.
 - Shows sample sightings when live data isn't available, such as during local development.
@@ -58,6 +59,12 @@ A lamp or other device can check this address every minute or so:
 
 Hood Canal, whales heading away, and species other than orcas are ignored. The distances, speed, and home point are in `ALERT_CONFIG` in `src/lib/alert.ts`, and the website banner uses the same code.
 
+## Whale-watch boats (`/api/boats`)
+
+`api/boats.ts` opens aisstream.io's live feed for up to ~25 seconds, keeps only the boats in `src/data/whaleWatchFleet.ts`, and returns their latest positions. Vercel's CDN reuses the answer for a minute. The browser remembers recent positions so it can draw trails.
+
+To add or remove a boat, edit `WHALE_WATCH_FLEET` in `src/data/whaleWatchFleet.ts` (you need the boat's 9-digit MMSI; look it up on VesselFinder or MarineTraffic).
+
 ## Environment variables
 
 Set these in Vercel → Project → Settings → Environment Variables. See `.env.example`.
@@ -65,6 +72,7 @@ Set these in Vercel → Project → Settings → Environment Variables. See `.en
 | Name | Required | What it's for |
 | --- | --- | --- |
 | `ACARTIA_TOKEN` | No | Acartia API token, only if Acartia starts requiring one |
+| `AISSTREAM_API_KEY` | For boats | Free API key from aisstream.io |
 | `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
 
 ## Project structure
