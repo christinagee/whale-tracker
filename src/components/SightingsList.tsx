@@ -6,6 +6,11 @@ import { OrcaIcon } from './OrcaIcon'
 import { PodBadges } from './PodBadges'
 import '../styles/SightingsList.css'
 
+// Species with their own picture in the list (the map keeps simple dots for everything but orcas).
+const LIST_PICTURES: Partial<Record<Sighting['species'], string>> = {
+  humpback: '/humpback-96.png',
+}
+
 interface Props {
   sightings: Sighting[]
   onSelect: (id: string) => void
@@ -21,12 +26,17 @@ export function SightingsList({ sightings, onSelect }: Props) {
       {sightings.map((s) => (
         <li key={s.id}>
           <button className="sighting-row" onClick={() => onSelect(s.id)}>
-            <span
-              className={`sighting-dot ${s.species === 'orca' ? 'sighting-dot-orca' : ''}`}
-              style={s.species === 'orca' ? undefined : { background: SPECIES[s.species].color }}
-            >
-              {s.species === 'orca' && <OrcaIcon size={26} />}
-            </span>
+            {s.species === 'orca' ? (
+              <span className="sighting-dot sighting-dot-picture">
+                <OrcaIcon size={26} />
+              </span>
+            ) : LIST_PICTURES[s.species] ? (
+              <span className="sighting-dot sighting-dot-picture">
+                <img src={LIST_PICTURES[s.species]} width={26} height={26} alt="" draggable={false} />
+              </span>
+            ) : (
+              <span className="sighting-dot" style={{ background: SPECIES[s.species].color }} />
+            )}
             <span className="sighting-main">
               <span className="sighting-title">
                 {SPECIES[s.species].label}
