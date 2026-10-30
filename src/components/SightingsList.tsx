@@ -9,6 +9,7 @@ import '../styles/SightingsList.css'
 // Species with their own picture in the list (the map keeps simple dots for everything but orcas).
 const LIST_PICTURES: Partial<Record<Sighting['species'], string>> = {
   humpback: '/humpback-96.png',
+  gray: '/gray-whale-96.png',
 }
 
 interface Props {
