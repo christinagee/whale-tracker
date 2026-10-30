@@ -33,6 +33,32 @@ function parseTime(value: unknown): Date {
   return Number.isNaN(date.getTime()) ? new Date() : date
 }
 
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+
+/** Some sources send HTML in their notes ("...south.<br><br>Submitted by..."). Turn it into plain text. */
+export function htmlToText(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li)>/gi, '\n')
+    .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
+    .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, code: string) => {
+      if (code[0] === '#') {
+        const n = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10)
+        return Number.isFinite(n) && n > 0 && n < 0x110000 ? String.fromCodePoint(n) : m
+      }
+      return ENTITIES[code.toLowerCase()] ?? m
+    })
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim()
+}
+
+/** Whale Alert adds a credit line to every report; we already show the source separately. */
+export function stripBoilerplate(text: string): string {
+  return text.replace(/\s*Submitted (by|via) (a |an |the )?Whale Alert[\s\S]*$/i, '').trim()
+}
+
 /**
  * Orca Network notes end with the observers' names in brackets, e.g.
  * "Humpback milling (Jennifer Fulton Carpenter)". We show the organization instead,
@@ -68,7 +94,7 @@ export function normalizeSighting(raw: RawSighting, index: number): Sighting | n
   if (latitude === null || longitude === null) return null
 
   const speciesLabel = str(raw.type ?? raw.species) || 'Unknown'
-  let comments = str(raw.data_source_comments ?? raw.comments).trim()
+  let comments = stripBoilerplate(htmlToText(str(raw.data_source_comments ?? raw.comments)))
   // Comments often start with the reporting organization in brackets, e.g. "[Orca Network] J pod, northbound"
   // (sometimes mistyped as "[Orca Network[").
   const bracketed = comments.match(/^\[([^[\]]+)[\][]\s*/)

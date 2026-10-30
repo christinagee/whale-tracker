@@ -6,7 +6,7 @@
 .detail dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 16px 0; font-size: 0.9rem; }
 .detail dt { color: var(--muted); }
 .detail dd { margin: 0; }
-.detail-comments { font-size: 0.95rem; line-height: 1.5; background: var(--foam); padding: 10px 12px; border-radius: 8px; }
+.detail-comments { white-space: pre-line; font-size: 0.95rem; line-height: 1.5; background: var(--foam); padding: 10px 12px; border-radius: 8px; }
 .detail-photo { width: 100%; border-radius: 8px; margin-top: 8px; }
 .detail-pod { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--sea); background: #f8fafc; font-size: 0.88rem; }
 .detail-pod p { margin: 4px 0 0; line-height: 1.45; }
