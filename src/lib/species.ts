@@ -17,13 +17,22 @@ export const SPECIES: Record<SpeciesKey, SpeciesInfo> = {
   other: { key: 'other', label: 'Other', color: '#a16207' },
 }
 
+// Organization names that contain species words ("Orca Network") and must not
+// be mistaken for what was seen.
+const ORGANIZATIONS =
+  /orca\s*network|orcasound|orcahello|orca behavio(u)?r institute|orca conservancy|(the )?whale museum|whale alert|conserve\.io/gi
+
+export function stripOrganizations(text: string): string {
+  return text.replace(ORGANIZATIONS, ' ')
+}
+
 export function classifySpecies(raw: string): SpeciesKey {
   const s = raw.toLowerCase()
   if (/orca|killer whale|southern resident|bigg|transient|\b[jkl][ -]?pod\b|srkw/.test(s)) return 'orca'
   if (/humpback/.test(s)) return 'humpback'
-  if (/gr[ae]y whale/.test(s)) return 'gray'
+  if (/gr[ae]y whale|^\s*gr[ae]y\b/.test(s)) return 'gray'
   if (/minke/.test(s)) return 'minke'
-  if (/fin whale|\bfin\b/.test(s)) return 'fin'
+  if (/fin whale/.test(s)) return 'fin' // not just "fin": reports mention dorsal fins
   if (/dolphin/.test(s)) return 'dolphin'
   if (/porpoise/.test(s)) return 'porpoise'
   return 'other'
