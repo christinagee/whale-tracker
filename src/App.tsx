@@ -108,7 +108,15 @@ export default function App() {
     setTab('listen')
   }
 
+  // On phones the page scrolls; bring the map back into view when something is picked from the list.
+  const showMapOnPhone = () => {
+    if (window.matchMedia('(max-width: 760px)').matches && window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   const select = (id: string) => {
+    showMapOnPhone()
     setSelectedId(id)
     setSelectedBoatId(null)
     setSelectedGatheringId(null)
@@ -116,6 +124,7 @@ export default function App() {
   }
 
   const selectBoat = (mmsi: string) => {
+    showMapOnPhone()
     setSelectedBoatId(mmsi)
     setSelectedGatheringId(null)
     setSelectedId(null)
@@ -123,6 +132,7 @@ export default function App() {
   }
 
   const selectGathering = (id: string) => {
+    showMapOnPhone()
     setSelectedGatheringId(id)
     setSelectedBoatId(null)
     setSelectedId(null)

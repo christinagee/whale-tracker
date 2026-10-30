@@ -46,13 +46,13 @@ a { color: var(--sea); }
 .status-sample { background: rgba(251,191,36,0.2); color: #fde68a; }
 
 .app-body { flex: 1; display: flex; min-height: 0; }
-.map-pane { flex: 1; min-width: 0; position: relative; }
+.map-pane { flex: 1; min-width: 0; position: relative; z-index: 0; /* keeps map buttons under the sticky tabs */ }
 .side-pane {
   width: 380px; flex-shrink: 0; display: flex; flex-direction: column;
   background: var(--card); border-left: 1px solid var(--line); overflow-y: auto;
 }
 
-.tabs { display: flex; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--card); z-index: 1; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--card); z-index: 10; }
 .tabs button {
   flex: 1; padding: 12px 6px; border: 0; background: none; color: var(--muted); font-weight: 600;
   border-bottom: 2px solid transparent; white-space: nowrap; font-size: 0.92rem;
@@ -96,9 +96,13 @@ a { color: var(--sea); }
 .pod-SRKW { background: #0f766e; }
 .pod-Biggs { background: #b45309; }
 
+/* Phones: the whole page scrolls, so scrolling the list pushes the map out of the way
+   and the list can use the full screen. The tabs stay pinned at the top. */
 @media (max-width: 760px) {
-  .app-body { flex-direction: column; }
-  .map-pane { flex: none; height: 52vh; }
-  .side-pane { width: 100%; flex: 1; border-left: 0; border-top: 1px solid var(--line); }
+  html, body, #root { height: auto; }
+  .app { height: auto; min-height: 100vh; }
+  .app-body { display: block; }
+  .map-pane { height: 55vh; height: 55svh; }
+  .side-pane { width: 100%; min-height: 60vh; overflow: visible; border-left: 0; border-top: 1px solid var(--line); }
   .tagline { display: none; }
 }

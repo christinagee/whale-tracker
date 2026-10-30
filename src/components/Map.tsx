@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import MapGL, { Layer, Marker, NavigationControl, Source, type MapRef } from 'react-map-gl/maplibre'
 import type { Sighting } from '../api/acartia'
 import type { Detection, Hydrophone } from '../api/orcasound'
@@ -77,6 +77,8 @@ export function Map({
   onSelectGathering,
 }: Props) {
   const mapRef = useRef<MapRef>(null)
+  // The key starts folded away on small screens, where it would cover the map.
+  const [keyOpen, setKeyOpen] = useState(() => !window.matchMedia('(max-width: 760px)').matches)
   const selected = sightings.find((s) => s.id === selectedId)
 
   useEffect(() => {
@@ -310,15 +312,24 @@ export function Map({
       <button className={`boats-toggle ${showBoats ? '' : 'boats-toggle-off'}`} onClick={onToggleBoats} aria-pressed={showBoats}>
         <BoatIcon size={14} color="#ea580c" /> Boats {showBoats ? <span className="boats-count">· {boats.length}</span> : <span className="boats-count">off</span>}
       </button>
-      <div className="map-key">
-        <span><span className="key-fade" /> Faded = older report</span>
-        <span><span className="key-path" /> Path of the same group</span>
-        {showBoats && (
-          <span>
-            <BoatIcon size={12} color="#ea580c" /> Whale-watch boat (may be delayed)
+      {keyOpen ? (
+        <button className="map-key" onClick={() => setKeyOpen(false)} aria-label="Hide map key">
+          <span className="map-key-title">
+            Map key <span className="map-key-close">✕</span>
           </span>
-        )}
-      </div>
+          <span><span className="key-fade" /> Faded = older report</span>
+          <span><span className="key-path" /> Path of the same group</span>
+          {showBoats && (
+            <span>
+              <BoatIcon size={12} color="#ea580c" /> Whale-watch boat (may be delayed)
+            </span>
+          )}
+        </button>
+      ) : (
+        <button className="map-key map-key-collapsed" onClick={() => setKeyOpen(true)} aria-label="Show map key">
+          ⓘ Map key
+        </button>
+      )}
     </div>
   )
 }
