@@ -1,0 +1,53 @@
+/* Boat markers */
+.boat-marker {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; background: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45));
+}
+.boat-marker-selected { filter: drop-shadow(0 0 4px #1e40af) drop-shadow(0 0 2px #1e40af); }
+.boat-marker-harbor { opacity: 0.55; }
+
+/* "Boats gathered" ring */
+.gathering-marker {
+  display: block; position: relative; width: 58px; height: 58px; padding: 0; border-radius: 50%; pointer-events: none;
+  border: 3px solid #ea580c; background: rgba(234, 88, 12, 0.14);
+}
+.gathering-marker::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid #ea580c;
+  animation: gathering-ripple 2s ease-out infinite; pointer-events: none;
+}
+@keyframes gathering-ripple { from { transform: scale(0.85); opacity: 0.9; } to { transform: scale(1.6); opacity: 0; } }
+.gathering-label {
+  white-space: nowrap; padding: 3px 9px; border: 0; border-radius: 999px; background: #ea580c; color: #fff;
+  font-size: 0.72rem; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Map toggle */
+.boats-toggle {
+  position: absolute; top: 48px; left: 10px; z-index: 5; display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border: 0; border-radius: 999px; background: #fff; color: #0b2545;
+  font-size: 0.78rem; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.boats-toggle-off { color: #64748b; }
+.boats-toggle-off svg { opacity: 0.4; }
+.boats-count { font-weight: 500; color: #64748b; }
+
+/* Sightings list callout */
+.boats-callout {
+  display: flex; align-items: center; gap: 8px; width: calc(100% - 32px); margin: 8px 16px 0; padding: 9px 11px;
+  border: 1px solid #fdba74; border-radius: 8px; background: #fff7ed; color: #7c2d12; font-size: 0.85rem; text-align: left;
+}
+.boats-callout:hover { background: #ffedd5; }
+
+/* Detail panel */
+.boat-detail { padding: 12px 16px 24px; }
+.boat-detail h2 { display: flex; align-items: center; gap: 8px; margin: 10px 0 2px; font-size: 1.25rem; }
+.boat-badge { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #fff7ed; }
+.boat-kind { margin: 0 0 10px; font-size: 0.85rem; }
+.boat-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 12px 0; font-size: 0.9rem; }
+.boat-facts dt { color: var(--muted); }
+.boat-facts dd { margin: 0; }
+.boat-old { color: #b45309; }
+.gathering-note { font-size: 0.9rem; line-height: 1.5; background: #fff7ed; padding: 10px 12px; border-radius: 8px; }
+.gathering-boats { list-style: none; padding: 0; margin: 8px 0; }
+.gathering-boats button { width: 100%; text-align: left; padding: 8px 0; border: 0; border-bottom: 1px solid var(--line); background: none; font-size: 0.9rem; }
+.boat-disclaimer { margin-top: 18px; font-size: 0.75rem; line-height: 1.45; color: var(--muted); }

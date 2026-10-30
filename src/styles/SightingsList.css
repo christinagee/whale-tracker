@@ -1,0 +1,26 @@
+.sightings-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.sighting-row {
+  display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left;
+  padding: 11px 16px; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit;
+}
+.sighting-row:hover { background: var(--foam); }
+.sighting-dot {
+  flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 26px; margin-top: 1px;
+  border-radius: 50%; color: #fff;
+}
+.sighting-dot-picture { width: 32px; height: 32px; margin-top: -2px; background: #fff; border: 1.5px solid var(--line); }
+.sighting-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sighting-title { font-weight: 600; }
+.sighting-count { font-weight: 400; color: var(--muted); }
+.sighting-comment {
+  font-size: 0.85rem; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.sighting-source { font-size: 0.75rem; color: var(--muted); opacity: 0.85; }
+.sighting-time { flex-shrink: 0; font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+.latest-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; vertical-align: 1px;
+  background: #facc15; color: #422006; font-size: 0.68rem; font-weight: 800;
+}
+/* Plain dots sit in the same space as a picture so the text lines up. */
+.sighting-dot:not(.sighting-dot-picture) { margin: 3px; }

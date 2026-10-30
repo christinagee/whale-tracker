@@ -1,140 +1,110 @@
 # 🐋 Whale Tracker
 
-Real-time whale sighting tracker for the Salish Sea. Built with React, MapLibre, and Acartia data.
-
-**Website:** [whale-tracker.vercel.app](https://whale-tracker.vercel.app)
+Whale and orca sightings in the Salish Sea, on a map. Built with React, MapLibre, and data from the [Acartia](https://acartia.io) data cooperative.
 
 ## Features
 
-✅ Real-time whale sightings from Acartia API  
-✅ Interactive map with species color-coding  
-✅ Recent sightings feed  
-✅ Detailed sighting information  
-✅ Auto-refresh every 30 seconds  
-✅ Fully responsive (desktop, tablet, mobile)  
-✅ No backend required  
+- Interactive map with color-coded species. Orcas get their own markers labeled by pod (J, K, L, T for Bigg's).
+- Filters for all whales, orcas only, or a single pod, over 24 hours, 3 days, 7 days, or everything.
+- Recent sightings list and a detail view for each sighting.
+- **Listen live**: hydrophones (underwater microphones) from [Orcasound](https://live.orcasound.net) appear on the map. You can play any of them live in the app, and a hydrophone pulses when listeners or Orcasound's AI detector report whale sounds there in the last two hours.
+- **Seattle orca alert**: a banner appears when orcas look to be heading toward Seattle, with an arrival estimate. The same alert is available at `/api/alert` for a lamp or other device.
+- **Whale-watch boats**: live positions of local whale-watching boats (from public AIS data via aisstream.io). Trails show where they've been, docked boats are greyed out, and when 2+ boats slow down together away from harbor the map flags "boats gathered", a sign whales are probably nearby.
+- **Meet the pods**: a guide to J, K and L pods and Bigg's killer whales, with a link to each pod's latest sighting.
+- Refreshes every minute. Works on desktop and phone.
+- Shows sample sightings when live data isn't available, such as during local development.
 
-## Quick Start
+## Viewing changes without installing anything
 
-### Local Development
+Connect the repo to Vercel (see [DEPLOY.md](./DEPLOY.md)). Each branch you push gets its own preview link, and the main site only updates when `main` changes.
+
+## Local development (optional)
+
+Needs [Node.js](https://nodejs.org) 18 or newer.
 
 ```bash
-# Install dependencies
 npm install
-
-# Run dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm preview
+npm run dev        # http://localhost:5173
+npm run build      # production build into dist/
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Locally the app shows sample sightings, because the live feed runs through a Vercel function (`api/sightings.ts`).
 
-### Deploy to Vercel
-
-See [DEPLOY.md](./DEPLOY.md) for step-by-step instructions.
-
-TL;DR:
-1. Push to GitHub
-2. Import repo in Vercel
-3. Done! 🚀
-
-## Project Structure
+## How live data works
 
 ```
+browser ──> /api/sightings (Vercel function) ──> https://acartia.io/api/v1/sightings/current
+```
+
+Acartia's current-sightings feed (the last 7 days) is public, so no API key is needed. The function avoids browser cross-origin (CORS) problems and caches responses for a minute. If you set an optional `ACARTIA_TOKEN`, it is sent along, and it stays on the server. Hydrophone locations, recent whale-sound reports, and the live audio come straight from Orcasound's public API (`src/api/orcasound.ts`). No key is needed.
+
+If the feed fails, the app switches to sample data and shows a "Sample data" badge.
+
+## Seattle orca alert (`/api/alert`)
+
+A lamp or other device can check this address every minute or so:
+
+| URL | Returns |
+| --- | --- |
+| `/api/alert` | JSON: `ok`, `level`, `state`, `color`, `effect`, `title`, `message`, `etaMinutes`, … |
+| `/api/alert?format=text` | Just the level: `0`, `1`, `2` or `3` |
+| `/api/alert?test=approaching` | A pretend alert for testing (`none`, `watch`, `approaching`, `here`) |
+
+| Level | State | Suggested light | When |
+| --- | --- | --- | --- |
+| 0 | none | off | Nothing relevant |
+| 1 | watch | amber, slow breathe | Orcas in Puget Sound within ~60 km of Seattle in the last 2 hr, direction unknown; or whale sounds on a nearby hydrophone in the last hour |
+| 2 | approaching | cyan, pulse | Orcas within ~60 km heading toward Seattle: "southbound" north of Seattle or "northbound" south of it, or later sightings getting closer. Includes an arrival estimate at ~7 km/h, usually 1–3 hr of warning |
+| 3 | here | blue, solid | Orcas within ~8 km of Seattle in the last 90 min |
+
+Hood Canal, whales heading away, and species other than orcas are ignored. The distances, speed, and home point are in `ALERT_CONFIG` in `src/lib/alert.ts`, and the website banner uses the same code.
+
+## Whale-watch boats (`/api/boats`)
+
+`api/boats.ts` opens aisstream.io's live feed for up to ~25 seconds, keeps only the boats in `src/data/whaleWatchFleet.ts`, and returns their latest positions. Vercel's CDN reuses the answer for a minute. The browser remembers recent positions so it can draw trails.
+
+To add or remove a boat, edit `WHALE_WATCH_FLEET` in `src/data/whaleWatchFleet.ts` (you need the boat's 9-digit MMSI; look it up on VesselFinder or MarineTraffic).
+
+## Environment variables
+
+Set these in Vercel → Project → Settings → Environment Variables. See `.env.example`.
+
+| Name | Required | What it's for |
+| --- | --- | --- |
+| `ACARTIA_TOKEN` | No | Acartia API token, only if Acartia starts requiring one |
+| `AISSTREAM_API_KEY` | For boats | Free API key from aisstream.io |
+| `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
+
+## Project structure
+
+```
+api/sightings.ts                 # Vercel function that proxies Acartia
+api/alert.ts                     # Vercel function: Seattle orca alert for a lamp
+public/whale.svg                 # favicon
 src/
-├── api/acartia.ts              # Acartia API client
+├── api/acartia.ts               # fetch + normalize sightings, sample-data fallback
+├── api/orcasound.ts             # hydrophones, whale-sound reports, live stream URLs
 ├── components/
-│   ├── Map.tsx                 # MapLibre map
-│   ├── SightingsList.tsx        # Recent sightings
-│   └── SightingDetail.tsx       # Detail view
-├── hooks/useSightings.ts        # TanStack Query hooks
-├── styles/                      # Component CSS
-├── App.tsx                      # Main app
-└── main.tsx                     # React entry point
+│   ├── Map.tsx                  # MapLibre map and markers
+│   ├── SightingsList.tsx        # recent sightings
+│   ├── SightingDetail.tsx       # one sighting
+│   ├── PodGuide.tsx             # "Meet the pods"
+│   ├── ListenPanel.tsx          # "Listen live" hydrophones
+│   ├── PodBadges.tsx, OrcaIcon.tsx
+├── data/demoSightings.ts        # sample sightings
+├── hooks/useSightings.ts        # TanStack Query (auto-refresh)
+├── hooks/useHydrophones.ts, useLiveAudio.ts
+├── lib/alert.ts                 # "orcas approaching Seattle" logic (banner + /api/alert)
+├── lib/sightings.ts             # parse Acartia records
+├── lib/species.ts               # species colors, orca pod detection, pod info
+├── lib/format.ts                # "2 hr ago" etc.
+├── styles/                      # CSS per component
+├── App.tsx
+└── main.tsx
 ```
 
-## Tech Stack
+## Ideas for later
 
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **MapLibre GL** - Interactive maps
-- **TanStack Query** - Data fetching & caching
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and update:
-
-```env
-VITE_ACARTIA_API_URL=https://acartia.io/api/v1
-VITE_MAPLIBRE_STYLE_URL=https://tiles.openfreemap.org/styles/liberty
-VITE_POLLING_INTERVAL=30000
-VITE_DEBUG=false
-```
-
-No API keys required for read-only access.
-
-## API
-
-Data sourced from **Acartia Data Cooperative**, which aggregates:
-- Orca Network sightings (vetted by experts)
-- Community science observations
-- Historical whale data
-
-### Endpoints Used
-
-- `GET /sightings/current` - All current sightings
-- `GET /sightings/trusted` - Orca Network verified only
-- `GET /sightings/:id` - Specific sighting details
-
-[Acartia API Docs](https://github.com/salish-sea/acartia)
-
-## Roadmap
-
-### V1 (MVP) ✅
-- Real-time sightings map
-- Sighting detail view
-- Recent sightings feed
-
-### V2 (Coming Soon)
-- [ ] Push notifications
-- [ ] Species filters
-- [ ] Time range filtering
-- [ ] Sighting history
-- [ ] Export as CSV
-
-### V3 (Future)
-- [ ] Mobile app (React Native/Expo)
-- [ ] User accounts
-- [ ] Saved locations
-- [ ] Dark mode
-
-## Contributing
-
-Have ideas for improvements? Issues and PRs welcome!
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT - Feel free to use this project for anything!
-
-## Acknowledgments
-
-- [Orca Network](https://orcanetwork.org) - Whale sighting data
-- [Acartia](https://acartia.io) - Data cooperative
-- [MapLibre](https://maplibre.org) - Open-source maps
-- [Vercel](https://vercel.com) - Hosting
-
----
-
-**Made with 🐋 by Christina**
-
-Questions? Email or open an issue on GitHub.
+- Notifications when a favorite pod is reported
+- "Near me" distance to each sighting
+- Dark mode

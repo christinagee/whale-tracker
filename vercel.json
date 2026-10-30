@@ -1,11 +1,11 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
   "framework": "vite",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "outputDirectory": "dist",
-  "env": {
-    "VITE_ACARTIA_API_URL": "@acartia_api_url",
-    "VITE_MAPLIBRE_STYLE_URL": "@maplibre_style_url"
+  "functions": {
+    "api/boats.ts": {
+      "maxDuration": 40
+    }
   }
 }
