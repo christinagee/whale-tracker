@@ -35,6 +35,7 @@ export function SightingsList({ sightings, onSelect }: Props) {
                 {s.id === latestId && <span className="latest-badge">Latest</span>}
               </span>
               {s.comments && <span className="sighting-comment">{s.comments}</span>}
+              {s.source && <span className="sighting-source">via {s.source}</span>}
             </span>
             <span className="sighting-time">{timeAgo(s.time)}</span>
           </button>

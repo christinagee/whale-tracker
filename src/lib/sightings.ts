@@ -33,6 +33,35 @@ function parseTime(value: unknown): Date {
   return Number.isNaN(date.getTime()) ? new Date() : date
 }
 
+/**
+ * Orca Network notes end with the observers' names in brackets, e.g.
+ * "Humpback milling (Jennifer Fulton Carpenter)". We show the organization instead,
+ * so remove trailing brackets that look like people's names. Brackets with whale
+ * IDs, pods or numbers ("(J35)", "(Ts and Ks)") are kept.
+ */
+export function stripObserverNames(text: string): string {
+  let out = text.trim()
+  for (;;) {
+    const m = out.match(/\s*\(([^()]*)\)\s*[.!]?$/)
+    if (!m) return out
+    const inside = m[1].trim()
+    const words = inside.split(/[\s,&/+-]+/).filter(Boolean)
+    const isOrganization = /^(orca\s*network|orcasound|whale alert|conserve\.io|the whale museum|whale museum)$/i.test(inside)
+    const looksLikeNames =
+      inside.length > 0 &&
+      !/\d/.test(inside) &&
+      !/\b(pod|pods|orcas?|whales?|humpbacks?|gr[ae]ys?|minkes?|srkw|bigg'?s|residents?|transients?|calf|calves)\b/i.test(inside) &&
+      !/\b[JKLT]s?\b/.test(inside) &&
+      words.length <= 12 &&
+      words.every((w) =>
+        /^(and|via|per|from|by|with|et|al\.?|thanks|to|credit|sighting|sightings|confirmed|photo|photos|video|report|reported|relayed|observed|seen|[A-Z][\p{L}'.]*)$/u.test(w),
+      ) &&
+      words.some((w) => /^[A-Z]/.test(w))
+    if (!looksLikeNames && !isOrganization) return out
+    out = out.slice(0, out.length - m[0].length).trim()
+  }
+}
+
 export function normalizeSighting(raw: RawSighting, index: number): Sighting | null {
   const latitude = num(raw.latitude ?? raw.lat)
   const longitude = num(raw.longitude ?? raw.lon ?? raw.lng)
@@ -44,6 +73,7 @@ export function normalizeSighting(raw: RawSighting, index: number): Sighting | n
   // (sometimes mistyped as "[Orca Network[").
   const bracketed = comments.match(/^\[([^[\]]+)[\][]\s*/)
   if (bracketed) comments = comments.slice(bracketed[0].length)
+  comments = stripObserverNames(comments)
   const profile = raw.profile as { name?: unknown } | undefined
 
   // Trust the reported species; only read the comments when it's vague ("Unknown", "Whale", ...).
