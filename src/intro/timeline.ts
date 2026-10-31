@@ -85,17 +85,6 @@ function drawDogInFront(ctx: CanvasRenderingContext2D, t: number) {
     // trot in from the left
     const x = lerp(-20, 78, span(t, 900, 3500))
     drawDogSide(ctx, x, FLOOR_Y, step)
-    // introduce the star: a little name tag that follows her in
-    if (t > 2000 && t < 3450) {
-      const tx = Math.round(x - 4)
-      const ty = FLOOR_Y - 26
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(tx - 2, ty - 2, textWidth('BEAN') + 4, 9)
-      ctx.fillStyle = '#ee7d2c'
-      ctx.fillRect(tx - 2, ty + 7, textWidth('BEAN') + 4, 1)
-      px(ctx, x, ty + 8, '#ffffff')
-      drawText(ctx, 'BEAN', tx, ty, '#8a4a20')
-    }
     return
   }
   if (t < 4100) {
