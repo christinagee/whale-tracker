@@ -2,9 +2,7 @@
 import {
   C,
   H,
-  ORCAS_ICON,
   W,
-  drawCaption,
   drawChairBack,
   drawChairBase,
   drawDesktop,
@@ -14,6 +12,7 @@ import {
   drawPawCursor,
   drawRoom,
   drawScreens,
+  orcasIcon,
   px,
 } from './scene'
 import { drawText, textWidth } from './pixelFont'
@@ -53,12 +52,6 @@ function renderOffice(t: number) {
   const ctx = scene.getContext('2d')!
   ctx.drawImage(room(), 0, 0)
 
-  // Caption types itself out, then fades.
-  if (t < 3000) {
-    const n = Math.floor(span(t, 200, 1600) * CAPTION.length)
-    if (t < 2700 || Math.floor(t / 120) % 2 === 0) drawCaption(ctx, CAPTION.slice(0, n))
-  }
-
   // Monitors wake up once the dog starts typing.
   const typingStart = 5400
   drawScreens(ctx, t > typingStart + 400 ? 1 : 0)
@@ -93,7 +86,7 @@ function drawDogInFront(ctx: CanvasRenderingContext2D, t: number) {
     const x = lerp(-20, 78, span(t, 900, 3500))
     drawDogSide(ctx, x, FLOOR_Y, step)
     // introduce the star: a little name tag that follows her in
-    if (t > 1300 && t < 3300) {
+    if (t > 2000 && t < 3450) {
       const tx = Math.round(x - 4)
       const ty = FLOOR_Y - 26
       ctx.fillStyle = '#ffffff'
@@ -130,9 +123,31 @@ const ZOOM_START = 7200
 const ZOOM_END = 8700
 const SCREEN = { x: 112, y: 46, w: 28, h: 19 }
 
-/** Draws frame t onto a display canvas that is W*k by H*k pixels. */
+/**
+ * Where the camera looks (scene x of the view's center). On narrow screens only part of the
+ * room fits, so the camera follows the action; on wide screens it simply shows the whole room.
+ */
+function cameraX(t: number, viewW: number): number {
+  const half = viewW / 2
+  let x: number
+  if (t < 900) x = 0
+  else if (t < 3500) x = lerp(-20, 78, span(t, 900, 3500)) + 8 // follow Bean in
+  else if (t < 5100) x = lerp(86, 94, span(t, 3500, 4200)) // the hops
+  else x = lerp(94, 112, ease(span(t, 5100, 6400))) // drift toward the monitors
+  return Math.max(half, Math.min(W - half, x))
+}
+
+const caption = document.createElement('canvas')
+caption.width = W
+caption.height = 7
+
+/**
+ * Draws frame t. The display canvas always shows the room's full height; its width can show
+ * anywhere from part of the room (phones held upright) to all of it.
+ */
 export function renderIntro(out: CanvasRenderingContext2D, t: number) {
-  const k = out.canvas.width / W
+  const k = out.canvas.height / H
+  const viewW = out.canvas.width / k
   out.imageSmoothingEnabled = false
   out.fillStyle = '#0b2545'
   out.fillRect(0, 0, out.canvas.width, out.canvas.height)
@@ -140,34 +155,48 @@ export function renderIntro(out: CanvasRenderingContext2D, t: number) {
   if (t < ZOOM_END) {
     renderOffice(t)
     const z = ease(span(t, ZOOM_START, ZOOM_END))
-    // At full zoom the screen fills the frame.
-    const scale = lerp(1, W / SCREEN.w, z)
-    const cx = lerp(W / 2, SCREEN.x + SCREEN.w / 2, z)
+    // At full zoom the screen fills the view's width.
+    const scale = lerp(1, viewW / SCREEN.w, z)
+    const cx = lerp(cameraX(t, viewW), SCREEN.x + SCREEN.w / 2, z)
     const cy = lerp(H / 2, SCREEN.y + SCREEN.h / 2, z)
-    out.setTransform(k * scale, 0, 0, k * scale, (W / 2 - cx * scale) * k, (H / 2 - cy * scale) * k)
+    out.setTransform(k * scale, 0, 0, k * scale, (viewW / 2 - cx * scale) * k, (H / 2 - cy * scale) * k)
     out.drawImage(scene, 0, 0)
     out.setTransform(1, 0, 0, 1, 0, 0)
+
+    // Caption types itself out across the top, then blinks away.
+    if (t < 3000) {
+      const n = Math.floor(span(t, 200, 1600) * CAPTION.length)
+      if (t < 2700 || Math.floor(t / 120) % 2 === 0) {
+        const cctx = caption.getContext('2d')!
+        cctx.clearRect(0, 0, caption.width, caption.height)
+        drawText(cctx, CAPTION.slice(0, n), 1, 1, C.text)
+        const full = textWidth(CAPTION) + 2
+        const ck = Math.min(k, (out.canvas.width * 0.94) / full)
+        out.drawImage(caption, Math.round((out.canvas.width - full * ck) / 2), Math.round(2 * k), caption.width * ck, caption.height * ck)
+      }
+    }
   }
 
   if (t >= ZOOM_END) {
-    // The desktop fades in as the zoom finishes.
+    // The desktop is laid out for the view's shape.
+    const dw = Math.max(100, Math.min(W, Math.round(viewW)))
+    if (desktop.width !== dw) desktop.width = dw
     const dctx = desktop.getContext('2d')!
     const clicks = [10050, 10300]
     const selected = t > clicks[0]
     drawDesktop(dctx, selected)
 
     // paw cursor glides to the orcas folder and double-clicks
+    const icon = orcasIcon(dw)
     const move = ease(span(t, 9000, 9900))
-    const tx = ORCAS_ICON.x + ORCAS_ICON.w / 2
-    const ty = ORCAS_ICON.y + 5
-    const cxp = lerp(168, tx, move)
-    const cyp = lerp(126, ty, move)
+    const cxp = lerp(dw - 24, icon.x + icon.w / 2, move)
+    const cyp = lerp(126, icon.y + 5, move)
     const pressed = clicks.some((c) => t > c && t < c + 110)
 
     if (t > 10500) drawOpeningWindow(dctx, span(t, 10500, 11100))
     if (t < 10500) drawPawCursor(dctx, cxp, cyp, pressed)
 
-    out.drawImage(desktop, 0, 0, W * k, H * k)
+    out.drawImage(desktop, 0, 0, out.canvas.width, out.canvas.height)
   }
 
   // A quick retro "screen flash" hides the switch from the zoomed room to the desktop.

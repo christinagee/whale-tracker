@@ -364,7 +364,10 @@ export function drawDogBack(ctx: Ctx, bob: number) {
 
 // ── The computer desktop we zoom into ───────────────────────
 
-export const ORCAS_ICON = { x: 90, y: 58, w: 14, h: 11 }
+/** Where the orcas folder sits on a desktop of the given width (kept clear of the icon column). */
+export function orcasIcon(width: number) {
+  return { x: Math.max(46, Math.round(width * 0.55) - 7), y: 58, w: 14, h: 11 }
+}
 
 function drawFolder(ctx: Ctx, x: number, y: number, withOrca: boolean) {
   rect(ctx, x, y + 1, 6, 2, C.folderDark)
@@ -381,6 +384,8 @@ function drawFolder(ctx: Ctx, x: number, y: number, withOrca: boolean) {
 }
 
 export function drawDesktop(ctx: Ctx, selected: boolean) {
+  const W = ctx.canvas.width
+  const ORCAS_ICON = orcasIcon(W)
   // wallpaper: calm ocean bands with little waves
   const bands = ['#1d5683', '#225f8f', '#28699b', '#2e73a6']
   for (let y = 0; y < H; y++) rect(ctx, 0, y, W, 1, bands[Math.min(3, Math.floor(y / 36))])
@@ -436,6 +441,8 @@ export function drawPawCursor(ctx: Ctx, x: number, y: number, pressed: boolean) 
 
 /** The orcas window opening: grows from the icon to nearly full screen (p = 0..1). */
 export function drawOpeningWindow(ctx: Ctx, p: number) {
+  const W = ctx.canvas.width
+  const ORCAS_ICON = orcasIcon(W)
   const from = { x: ORCAS_ICON.x, y: ORCAS_ICON.y, w: ORCAS_ICON.w, h: ORCAS_ICON.h }
   const to = { x: 8, y: 14, w: W - 16, h: H - 22 }
   const e = 1 - Math.pow(1 - p, 3)
@@ -450,10 +457,11 @@ export function drawOpeningWindow(ctx: Ctx, p: number) {
     drawText(ctx, 'ORCAS', x + Math.round((w - textWidth('ORCAS')) / 2), y + 3, '#3a414a')
     rect(ctx, x + 3, y + 3, 4, 4, '#e0605a')
     // a tiny map: land and a few orcas
-    rect(ctx, x + 10, y + 20, 30, 18, '#d6e6c9')
-    rect(ctx, x + w - 46, y + 30, 36, 40, '#d6e6c9')
-    rect(ctx, x + 30, y + h - 30, 40, 18, '#d6e6c9')
-    for (const [ox, oy] of [[70, 40], [90, 64], [60, 78]]) {
+    rect(ctx, x + 6, y + 20, Math.round(w * 0.2), 18, '#d6e6c9')
+    rect(ctx, x + w - Math.round(w * 0.28), y + 30, Math.round(w * 0.22), 40, '#d6e6c9')
+    rect(ctx, x + Math.round(w * 0.18), y + h - 30, Math.round(w * 0.25), 18, '#d6e6c9')
+    for (const [fx, oy] of [[0.4, 40], [0.52, 64], [0.34, 78]]) {
+      const ox = Math.round(w * fx)
       rect(ctx, x + ox, y + oy, 7, 3, '#1b1c20')
       px(ctx, x + ox + 3, y + oy - 1, '#1b1c20')
       px(ctx, x + ox + 1, y + oy + 1, '#ffffff')

@@ -12,14 +12,22 @@ interface Props {
 /** Full-screen pixel-art intro: the dachshund takes over Daniel's computer and opens "orcas". */
 export function Intro({ onDone, freezeAt = null }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [scale, setScale] = useState(1)
+  const [size, setSize] = useState({ w: W, h: H, dpr: 1 })
   const [leaving, setLeaving] = useState(false)
   const doneRef = useRef(onDone)
   doneRef.current = onDone
 
-  // Largest whole-number scale that fits the screen keeps the pixels crisp.
+  // As big as the screen allows: always the room's full height, and on narrow (upright phone)
+  // screens only part of its width, which the camera pans across. At least 100 pixels of the
+  // room stay visible side to side, and never more than the whole room.
   useEffect(() => {
-    const fit = () => setScale(Math.max(1, Math.floor(Math.min(window.innerWidth / W, (window.innerHeight * 0.82) / H))))
+    const fit = () => {
+      const availW = window.innerWidth
+      const availH = window.innerHeight * 0.86
+      const k = Math.min(availH / H, availW / 100)
+      const w = Math.floor(Math.min(availW, W * k))
+      setSize({ w, h: Math.floor(H * k), dpr: Math.min(window.devicePixelRatio || 1, 3) })
+    }
     fit()
     window.addEventListener('resize', fit)
     return () => window.removeEventListener('resize', fit)
@@ -47,7 +55,7 @@ export function Intro({ onDone, freezeAt = null }: Props) {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [scale, freezeAt])
+  }, [size, freezeAt])
 
   const skip = () => {
     setLeaving(true)
@@ -56,7 +64,13 @@ export function Intro({ onDone, freezeAt = null }: Props) {
 
   return (
     <div className={`intro ${leaving ? 'intro-leaving' : ''}`} onClick={freezeAt === null ? skip : undefined} role="dialog" aria-label="Intro animation">
-      <canvas ref={canvasRef} width={W * scale} height={H * scale} className="intro-canvas" />
+      <canvas
+        ref={canvasRef}
+        width={Math.round(size.w * size.dpr)}
+        height={Math.round(size.h * size.dpr)}
+        style={{ width: size.w, height: size.h }}
+        className="intro-canvas"
+      />
       {freezeAt === null && (
         <button
           className="intro-skip"
