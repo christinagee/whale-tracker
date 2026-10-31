@@ -415,9 +415,9 @@ export function drawDesktop(ctx: Ctx, selected: boolean) {
   drawText(ctx, 'ZZ', 14, 67, '#e8eef4')
   drawText(ctx, 'Z', 22, 63, '#e8eef4')
   label('NAPS', 19, 76)
-  // squirrels folder
+  // carrots folder
   drawFolder(ctx, 12, 86, false)
-  label('SQUIRRELS', 19, 99)
+  label('CARROTS', 19, 99)
 
   // the orcas folder, front and center
   if (selected) rect(ctx, ORCAS_ICON.x - 2, ORCAS_ICON.y - 1, ORCAS_ICON.w + 4, ORCAS_ICON.h + 2, '#2563eb')
