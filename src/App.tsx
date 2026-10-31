@@ -39,36 +39,19 @@ const FILTERS: { key: SpeciesFilter; label: string }[] = [
   { key: 'Biggs', label: "Bigg's" },
 ]
 
-// Intro animation: plays automatically on the first visit (remembered in this browser).
-// ?intro=1 always plays it, ?intro=0 never does (handy for sharing preview links),
-// and ?introAt=8000 freezes it at that moment (in ms), for checking single frames.
-const INTRO_SEEN_KEY = 'whale-tracker:intro-seen'
-
+// Intro animation: plays every time the site is opened (Skip, or tap, to jump to the map).
+// ?intro=0 turns it off for that visit (handy for sharing preview links), and
+// ?introAt=8000 freezes it at that moment (in ms), for checking single frames.
 function introFromUrl(): { show: boolean; freezeAt: number | null } {
   try {
     const q = new URLSearchParams(window.location.search)
     const at = q.get('introAt')
     if (at !== null) return { show: true, freezeAt: Number(at) }
     if (q.get('intro') === '0') return { show: false, freezeAt: null }
-    if (q.has('intro')) return { show: true, freezeAt: null }
   } catch {
     // fall through
   }
-  let seen = false
-  try {
-    seen = localStorage.getItem(INTRO_SEEN_KEY) === 'yes'
-  } catch {
-    // storage unavailable: play it
-  }
-  return { show: !seen, freezeAt: null }
-}
-
-function rememberIntroSeen() {
-  try {
-    localStorage.setItem(INTRO_SEEN_KEY, 'yes')
-  } catch {
-    // storage unavailable: it will play again next time
-  }
+  return { show: true, freezeAt: null }
 }
 
 export default function App() {
@@ -183,10 +166,7 @@ export default function App() {
       {intro.show && (
         <Intro
           freezeAt={intro.freezeAt}
-          onDone={() => {
-            rememberIntroSeen()
-            setIntro({ show: false, freezeAt: null })
-          }}
+          onDone={() => setIntro({ show: false, freezeAt: null })}
         />
       )}
       <header className="app-header">
