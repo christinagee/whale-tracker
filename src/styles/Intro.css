@@ -1,0 +1,11 @@
+.intro {
+  position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+  background: #0b2545; transition: opacity 0.45s ease; cursor: pointer;
+}
+.intro-leaving { opacity: 0; pointer-events: none; }
+.intro-canvas { image-rendering: pixelated; image-rendering: crisp-edges; box-shadow: 0 8px 30px rgba(0,0,0,0.45); border-radius: 4px; }
+.intro-skip {
+  position: absolute; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); padding: 8px 14px;
+  border: 0; border-radius: 999px; background: rgba(255,255,255,0.14); color: #fff; font-weight: 700; font-size: 0.9rem;
+}
+.intro-skip:hover { background: rgba(255,255,255,0.24); }

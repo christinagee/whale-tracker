@@ -10,6 +10,7 @@ import { useBoats } from './hooks/useBoats'
 import { describePlace, findGatherings } from './lib/boats'
 import { BoatDetail } from './components/BoatDetail'
 import { BoatIcon } from './components/BoatIcon'
+import { Intro } from './intro/Intro'
 import { AlertBanner } from './components/AlertBanner'
 import { Map } from './components/Map'
 import { SightingsList } from './components/SightingsList'
@@ -38,7 +39,20 @@ const FILTERS: { key: SpeciesFilter; label: string }[] = [
   { key: 'Biggs', label: "Bigg's" },
 ]
 
+// Intro animation: for now only shown with ?intro=1 while it's being reviewed.
+// ?introAt=8000 freezes it at that moment (in ms), for checking single frames.
+function introFromUrl(): { show: boolean; freezeAt: number | null } {
+  try {
+    const q = new URLSearchParams(window.location.search)
+    const at = q.get('introAt')
+    return { show: q.has('intro') || at !== null, freezeAt: at !== null ? Number(at) : null }
+  } catch {
+    return { show: false, freezeAt: null }
+  }
+}
+
 export default function App() {
+  const [intro, setIntro] = useState(introFromUrl)
   const { data, isLoading, dataUpdatedAt } = useSightings()
   const [filter, setFilter] = useState<SpeciesFilter>('all')
   const [rangeHours, setRangeHours] = useState(72)
@@ -146,6 +160,7 @@ export default function App() {
 
   return (
     <div className="app">
+      {intro.show && <Intro freezeAt={intro.freezeAt} onDone={() => setIntro({ show: false, freezeAt: null })} />}
       <header className="app-header">
         <div className="brand">
           <span className="brand-icon">
