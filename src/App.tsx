@@ -39,15 +39,35 @@ const FILTERS: { key: SpeciesFilter; label: string }[] = [
   { key: 'Biggs', label: "Bigg's" },
 ]
 
-// Intro animation: for now only shown with ?intro=1 while it's being reviewed.
-// ?introAt=8000 freezes it at that moment (in ms), for checking single frames.
+// Intro animation: plays automatically on the first visit (remembered in this browser).
+// ?intro=1 always plays it, ?intro=0 never does (handy for sharing preview links),
+// and ?introAt=8000 freezes it at that moment (in ms), for checking single frames.
+const INTRO_SEEN_KEY = 'whale-tracker:intro-seen'
+
 function introFromUrl(): { show: boolean; freezeAt: number | null } {
   try {
     const q = new URLSearchParams(window.location.search)
     const at = q.get('introAt')
-    return { show: q.has('intro') || at !== null, freezeAt: at !== null ? Number(at) : null }
+    if (at !== null) return { show: true, freezeAt: Number(at) }
+    if (q.get('intro') === '0') return { show: false, freezeAt: null }
+    if (q.has('intro')) return { show: true, freezeAt: null }
   } catch {
-    return { show: false, freezeAt: null }
+    // fall through
+  }
+  let seen = false
+  try {
+    seen = localStorage.getItem(INTRO_SEEN_KEY) === 'yes'
+  } catch {
+    // storage unavailable: play it
+  }
+  return { show: !seen, freezeAt: null }
+}
+
+function rememberIntroSeen() {
+  try {
+    localStorage.setItem(INTRO_SEEN_KEY, 'yes')
+  } catch {
+    // storage unavailable: it will play again next time
   }
 }
 
@@ -160,12 +180,25 @@ export default function App() {
 
   return (
     <div className="app">
-      {intro.show && <Intro freezeAt={intro.freezeAt} onDone={() => setIntro({ show: false, freezeAt: null })} />}
+      {intro.show && (
+        <Intro
+          freezeAt={intro.freezeAt}
+          onDone={() => {
+            rememberIntroSeen()
+            setIntro({ show: false, freezeAt: null })
+          }}
+        />
+      )}
       <header className="app-header">
         <div className="brand">
-          <span className="brand-icon">
+          <button
+            className="brand-icon"
+            onClick={() => setIntro({ show: true, freezeAt: null })}
+            aria-label="Replay the intro"
+            title="Replay the intro"
+          >
             <OrcaIcon size={40} />
-          </span>
+          </button>
           <div>
             <h1>Whale Tracker</h1>
             <p className="tagline">Salish Sea sightings</p>
