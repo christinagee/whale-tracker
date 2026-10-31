@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import App from './App.tsx'
 import './styles/App.css'
+import './styles/retro.css'
 
 const queryClient = new QueryClient()
 

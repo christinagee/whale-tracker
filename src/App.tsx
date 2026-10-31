@@ -10,6 +10,7 @@ import { useBoats } from './hooks/useBoats'
 import { describePlace, findGatherings } from './lib/boats'
 import { BoatDetail } from './components/BoatDetail'
 import { BoatIcon } from './components/BoatIcon'
+import { Intro } from './intro/Intro'
 import { AlertBanner } from './components/AlertBanner'
 import { Map } from './components/Map'
 import { SightingsList } from './components/SightingsList'
@@ -38,7 +39,23 @@ const FILTERS: { key: SpeciesFilter; label: string }[] = [
   { key: 'Biggs', label: "Bigg's" },
 ]
 
+// Intro animation: plays every time the site is opened (Skip, or tap, to jump to the map).
+// ?intro=0 turns it off for that visit (handy for sharing preview links), and
+// ?introAt=8000 freezes it at that moment (in ms), for checking single frames.
+function introFromUrl(): { show: boolean; freezeAt: number | null } {
+  try {
+    const q = new URLSearchParams(window.location.search)
+    const at = q.get('introAt')
+    if (at !== null) return { show: true, freezeAt: Number(at) }
+    if (q.get('intro') === '0') return { show: false, freezeAt: null }
+  } catch {
+    // fall through
+  }
+  return { show: true, freezeAt: null }
+}
+
 export default function App() {
+  const [intro, setIntro] = useState(introFromUrl)
   const { data, isLoading, dataUpdatedAt } = useSightings()
   const [filter, setFilter] = useState<SpeciesFilter>('all')
   const [rangeHours, setRangeHours] = useState(72)
@@ -146,11 +163,22 @@ export default function App() {
 
   return (
     <div className="app">
+      {intro.show && (
+        <Intro
+          freezeAt={intro.freezeAt}
+          onDone={() => setIntro({ show: false, freezeAt: null })}
+        />
+      )}
       <header className="app-header">
         <div className="brand">
-          <span className="brand-icon">
-            <OrcaIcon size={34} />
-          </span>
+          <button
+            className="brand-icon"
+            onClick={() => setIntro({ show: true, freezeAt: null })}
+            aria-label="Replay the intro"
+            title="Replay the intro"
+          >
+            <OrcaIcon size={40} />
+          </button>
           <div>
             <h1>Whale Tracker</h1>
             <p className="tagline">Salish Sea sightings</p>

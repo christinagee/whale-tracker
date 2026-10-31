@@ -8,8 +8,8 @@ import '../styles/SightingsList.css'
 
 // Species with their own picture in the list (the map keeps simple dots for everything but orcas).
 const LIST_PICTURES: Partial<Record<Sighting['species'], string>> = {
-  humpback: '/humpback-96.png',
-  gray: '/gray-whale-96.png',
+  humpback: '/pixel/humpback-32.png',
+  gray: '/pixel/gray-whale-32.png',
 }
 
 interface Props {
@@ -29,11 +29,11 @@ export function SightingsList({ sightings, onSelect }: Props) {
           <button className="sighting-row" onClick={() => onSelect(s.id)}>
             {s.species === 'orca' ? (
               <span className="sighting-dot sighting-dot-picture">
-                <OrcaIcon size={26} />
+                <OrcaIcon size={32} />
               </span>
             ) : LIST_PICTURES[s.species] ? (
               <span className="sighting-dot sighting-dot-picture">
-                <img src={LIST_PICTURES[s.species]} width={26} height={26} alt="" draggable={false} />
+                <img className="pixel-art" src={LIST_PICTURES[s.species]} width={32} height={32} alt="" draggable={false} />
               </span>
             ) : (
               <span className="sighting-dot" style={{ background: SPECIES[s.species].color }} />
