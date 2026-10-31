@@ -1,0 +1,114 @@
+/* ─────────────────────────────────────────────────────────────
+   Retro pixel theme, matching the intro animation.
+   Loaded last, so it restyles the rest of the app.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --pixel-font: 'Pixelify Sans', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --edge: #0b2545;
+  --hard-shadow: 3px 3px 0 var(--edge);
+  --hard-shadow-sm: 2px 2px 0 var(--edge);
+  --accent-orange: #ee7d2c;
+  font-family: var(--pixel-font);
+}
+button, input { font-family: var(--pixel-font); }
+body { background: #e9f1f6; }
+
+/* Square corners and choppy, game-like animation everywhere. */
+*, *::before, *::after { border-radius: 0 !important; }
+* { animation-timing-function: steps(3, end) !important; }
+
+.pixel-art, .orca-img, .marker img, .sighting-dot img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ── Header: a game title bar with a pixel stripe underneath ── */
+.app-header {
+  background: var(--edge);
+  border-bottom: 4px solid #1e6091;
+  box-shadow: 0 4px 0 #13315c;
+  position: relative;
+  margin-bottom: 4px;
+}
+.app-header h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.04em; text-shadow: 2px 2px 0 #000; }
+.tagline { font-size: 0.85rem; opacity: 0.85; }
+.brand-icon { width: 48px; height: 48px; background: #e9f1f6; border: 2px solid #fff; box-shadow: 3px 3px 0 #000; }
+.status { border: 2px solid rgba(255,255,255,0.35); font-size: 0.85rem; background: rgba(255,255,255,0.08); }
+.status-live::before { width: 8px; height: 8px; box-shadow: none; animation: retro-blink 1.2s infinite; }
+@keyframes retro-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.2; } }
+
+/* ── Tabs ── */
+.tabs { border-bottom: 2px solid var(--edge); }
+.tabs button { font-size: 1rem; font-weight: 600; color: #5b6b7f; }
+.tabs button[aria-selected='true'] { color: var(--edge); border-bottom: 4px solid var(--accent-orange); background: #fff7ed; }
+.tab-count { background: var(--edge); color: #fff; font-size: 0.8rem; }
+
+/* ── Buttons / chips: chunky outline with a hard shadow that "presses" ── */
+.chip {
+  border: 2px solid var(--edge); box-shadow: var(--hard-shadow-sm); font-size: 0.95rem; padding: 4px 10px;
+  transition: none;
+}
+.chip:active { transform: translate(2px, 2px); box-shadow: none; }
+.chip-on { background: var(--edge); color: #fff; }
+.chips-small .chip { font-size: 0.85rem; padding: 2px 8px; }
+
+/* ── Notes and callouts: framed boxes ── */
+.orca-callout, .heard-callout, .boats-callout, .sample-note, .detail-comments, .gathering-note, .detail-pod {
+  border: 2px solid var(--edge); box-shadow: var(--hard-shadow-sm);
+}
+.orca-callout { background: #fff; font-size: 1rem; }
+.alert-banner { border-bottom: 2px solid var(--edge); }
+.alert-light { box-shadow: none; animation: retro-blink 1s infinite !important; }
+
+/* ── Sightings list ── */
+.sighting-row { border-bottom: 2px dashed #c9d6e2; }
+.sighting-title { font-size: 1.05rem; }
+.sighting-comment { font-size: 0.95rem; }
+.sighting-dot { width: 22px; height: 22px; margin: 7px !important; border: 2px solid var(--edge); }
+.sighting-dot-picture { width: 40px; height: 40px; margin: 0 !important; background: #fff; border: 2px solid var(--edge); box-shadow: var(--hard-shadow-sm); }
+.pod-badge, .latest-badge { border: 2px solid rgba(0,0,0,0.25); font-size: 0.72rem; padding: 0 5px; }
+.latest-badge { animation: retro-blink 1.4s infinite; }
+
+/* ── Detail panels ── */
+.detail h2, .boat-detail h2, .pod-card h3, .hydro-name h3 { letter-spacing: 0.02em; }
+.detail-dot { border: 2px solid var(--edge); }
+.back { font-size: 1rem; }
+
+/* ── Map markers and map buttons ── */
+.marker { border: 2px solid #fff; box-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+.marker-orca { width: 40px; height: 40px; border: 2px solid var(--edge); box-shadow: var(--hard-shadow-sm); }
+.marker-pod { border: 2px solid #fff; font-size: 0.7rem; line-height: 14px; }
+.marker-trail { border: 2px solid #fff; }
+.marker-latest { box-shadow: 0 0 0 3px #facc15, 3px 3px 0 3px var(--edge); }
+.marker-latest::before { border: 3px solid #facc15; animation: retro-blink 1s infinite !important; }
+.latest-label, .gathering-label { border: 2px solid #fff; box-shadow: 2px 2px 0 rgba(0,0,0,0.5); font-size: 0.75rem; }
+.home-marker { border: 2px solid var(--edge); box-shadow: var(--hard-shadow-sm); font-size: 0.8rem; }
+.latest-button, .boats-toggle, .map-key {
+  border: 2px solid var(--edge) !important; box-shadow: var(--hard-shadow-sm); font-size: 0.85rem;
+}
+.latest-dot { box-shadow: none; border: 2px solid var(--edge); animation: retro-blink 1.2s infinite; }
+.hydro-marker { border: 2px solid #fff; box-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+.hydro-marker-hot::after { border: 3px solid #14b8a6; animation: retro-blink 1s infinite !important; inset: -6px; }
+.gathering-marker { border: 3px dashed #ea580c; }
+.gathering-marker::after { border: 3px dashed #ea580c; }
+.maplibregl-ctrl-group { border: 2px solid var(--edge) !important; box-shadow: var(--hard-shadow-sm) !important; }
+
+/* ── Listen live and Pods cards ── */
+.hydro-card, .pod-card { border: 2px solid var(--edge); box-shadow: var(--hard-shadow); }
+.hydro-icon, .pod-letter { border: 2px solid var(--edge); }
+.play { border: 2px solid var(--edge); box-shadow: var(--hard-shadow-sm); font-size: 1.1rem; }
+.play:active { transform: translate(2px, 2px); box-shadow: none; }
+.detections li { border-bottom: 2px dashed #c9d6e2; }
+
+/* ── Intro skip button ── */
+.intro-skip { border: 2px solid rgba(255,255,255,0.6); font-size: 1rem; }
+.intro-canvas { box-shadow: 6px 6px 0 #000; }
+
+/* The map sets its own font; use the pixel font for labels on it too. */
+.maplibregl-map { font-family: var(--pixel-font); }
+
+@media (max-width: 760px) {
+  .app-header h1 { font-size: 1.15rem; white-space: nowrap; }
+  .brand-icon { width: 44px; height: 44px; }
+}

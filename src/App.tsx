@@ -164,7 +164,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand">
           <span className="brand-icon">
-            <OrcaIcon size={34} />
+            <OrcaIcon size={40} />
           </span>
           <div>
             <h1>Whale Tracker</h1>
