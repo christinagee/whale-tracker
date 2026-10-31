@@ -388,7 +388,7 @@ export function drawDesktop(ctx: Ctx, selected: boolean) {
   // menu bar
   rect(ctx, 0, 0, W, 9, '#dfe4ea')
   rect(ctx, 0, 9, W, 1, '#aab3bd')
-  drawText(ctx, 'DESKTOP', 4, 2, '#3a414a')
+  drawText(ctx, 'LOGGED IN: BEAN', 4, 2, '#3a414a')
   drawText(ctx, '9:41', W - textWidth('9:41') - 4, 2, '#3a414a')
 
   // icons down the left
