@@ -1,6 +1,7 @@
 // The intro's timeline: renderIntro(t) draws the frame for time t (in ms).
 import {
   C,
+  CHAIR_DY,
   H,
   W,
   drawChairBack,
@@ -22,7 +23,7 @@ export const DURATION = 17600
 
 const CAPTION = "MEANWHILE, AT DANIEL'S DESK..."
 const FLOOR_Y = 124 // where the dog's paws touch the rug
-const SEAT_Y = 86
+const SEAT_Y = 86 + CHAIR_DY
 
 const ease = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2)
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
@@ -66,7 +67,7 @@ function renderOffice(t: number) {
     if (typing && t < 7000) {
       // little "tap tap" above the dog
       const blink = Math.floor(t / 280) % 2
-      drawText(ctx, 'TAP', blink ? 82 : 108, 40 + blink, '#7a8089')
+      drawText(ctx, 'TAP', blink ? 82 : 108, 40 + CHAIR_DY + blink, '#7a8089')
     }
     if (t > typingStart + 400 && t < typingStart + 700) {
       // a flash as the screens wake

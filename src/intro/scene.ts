@@ -269,8 +269,12 @@ function drawMiniDesktop(ctx: Ctx, on: boolean) {
 // ── Chair (drawn in two parts so the dog can sit behind the mesh back) ───
 
 export const CHAIR_X = 100
+/** How far the chair sits below its original spot, so its wheels rest on the rug. */
+export const CHAIR_DY = 12
 
 export function drawChairBase(ctx: Ctx) {
+  ctx.save()
+  ctx.translate(0, CHAIR_DY)
   const cx = CHAIR_X
   rect(ctx, cx - 12, 86, 25, 4, C.chair) // seat
   rect(ctx, cx - 14, 82, 3, 7, C.chair) // armrests
@@ -279,10 +283,13 @@ export function drawChairBase(ctx: Ctx) {
   rect(ctx, cx - 14, 104, 29, 2, C.chair) // star base
   rect(ctx, cx - 5, 105, 11, 3, C.chair)
   for (const [dx, dy] of [[-14, 106], [-7, 108], [0, 108], [7, 108], [14, 106]]) rect(ctx, cx + dx - 1, dy, 3, 3, C.chairMetal)
+  ctx.restore()
 }
 
 /** The mesh backrest: a solid frame with a see-through checker mesh inside. */
 export function drawChairBack(ctx: Ctx) {
+  ctx.save()
+  ctx.translate(0, CHAIR_DY)
   const cx = CHAIR_X
   rect(ctx, cx - 7, 59, 15, 5, C.chair) // headrest
   rect(ctx, cx - 1, 64, 3, 2, C.chair)
@@ -296,6 +303,7 @@ export function drawChairBack(ctx: Ctx) {
       else if ((x + y) % 2 === 0) px(ctx, x, y, C.chairMesh)
     }
   }
+  ctx.restore()
 }
 
 // ── The dachshund ───────────────────────────────────────────
@@ -342,6 +350,8 @@ export function drawDogSide(ctx: Ctx, x: number, y: number, step: number, tuck =
  * bob: 0/1 head bob while typing. The chair back is drawn on top, so the body shows through the mesh.
  */
 export function drawDogBack(ctx: Ctx, bob: number) {
+  ctx.save()
+  ctx.translate(0, CHAIR_DY)
   const cx = CHAIR_X
   const hy = 50 + bob
   // sweater body (mostly behind the mesh)
@@ -360,6 +370,7 @@ export function drawDogBack(ctx: Ctx, bob: number) {
   // front paws reaching for the keyboard, peeking out on each side
   rect(ctx, cx - 9, hy + 13 + bob, 3, 2, C.coat)
   rect(ctx, cx + 7, hy + 14 - bob, 3, 2, C.coat)
+  ctx.restore()
 }
 
 // ── The computer desktop we zoom into ───────────────────────
