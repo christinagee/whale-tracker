@@ -1,6 +1,7 @@
 // The intro's timeline: renderIntro(t) draws the frame for time t (in ms).
 import {
   C,
+  CHAIR_DY,
   H,
   W,
   drawChairBack,
@@ -8,6 +9,7 @@ import {
   drawDesktop,
   drawDogBack,
   drawDogSide,
+  drawClaudeTerminal,
   drawOpeningWindow,
   drawPawCursor,
   drawRoom,
@@ -17,11 +19,11 @@ import {
 } from './scene'
 import { drawText, textWidth } from './pixelFont'
 
-export const DURATION = 11800
+export const DURATION = 17600
 
 const CAPTION = "MEANWHILE, AT DANIEL'S DESK..."
 const FLOOR_Y = 124 // where the dog's paws touch the rug
-const SEAT_Y = 86
+const SEAT_Y = 86 + CHAIR_DY
 
 const ease = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2)
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
@@ -65,7 +67,7 @@ function renderOffice(t: number) {
     if (typing && t < 7000) {
       // little "tap tap" above the dog
       const blink = Math.floor(t / 280) % 2
-      drawText(ctx, 'TAP', blink ? 82 : 108, 40 + blink, '#7a8089')
+      drawText(ctx, 'TAP', blink ? 82 : 108, 40 + CHAIR_DY + blink, '#7a8089')
     }
     if (t > typingStart + 400 && t < typingStart + 700) {
       // a flash as the screens wake
@@ -178,12 +180,30 @@ export function renderIntro(out: CanvasRenderingContext2D, t: number) {
     // paw cursor glides to the orcas folder and double-clicks
     const icon = orcasIcon(dw)
     const move = ease(span(t, 9000, 9900))
-    const cxp = lerp(dw - 24, icon.x + icon.w / 2, move)
-    const cyp = lerp(126, icon.y + 5, move)
-    const pressed = clicks.some((c) => t > c && t < c + 110)
+    let cxp = lerp(dw - 24, icon.x + icon.w / 2, move)
+    let cyp = lerp(126, icon.y + 5, move)
+    let pressed = clicks.some((c) => t > c && t < c + 110)
 
-    if (t > 10500) drawOpeningWindow(dctx, span(t, 10500, 11100))
-    if (t < 10500) drawPawCursor(dctx, cxp, cyp, pressed)
+    // The folder opens Claude Code: Bean asks where to whale watch, Claude answers, Bean clicks Yes.
+    if (t > 10500) {
+      const yesClick = 16000
+      const yes = drawClaudeTerminal(dctx, {
+        open: span(t, 10500, 11000),
+        typed: span(t, 11200, 12800),
+        thinking: t > 12900 && t < 13700,
+        reply: span(t, 13700, 15000),
+        choice: t > 15100,
+        yesOn: t > 15800,
+        t,
+      })
+      // the paw heads over to Yes (from where it clicked the folder) and clicks it
+      const toYes = ease(span(t, 15200, 15800))
+      cxp = lerp(icon.x + icon.w / 2, yes.x + yes.w / 2, toYes)
+      cyp = lerp(icon.y + 5, yes.y + 3, toYes)
+      pressed = t > yesClick && t < yesClick + 140
+      if (t > 16300) drawOpeningWindow(dctx, span(t, 16300, 16900))
+    }
+    if (t < 10500 || (t > 15200 && t < 16300)) drawPawCursor(dctx, cxp, cyp, pressed)
 
     out.drawImage(desktop, 0, 0, out.canvas.width, out.canvas.height)
   }
