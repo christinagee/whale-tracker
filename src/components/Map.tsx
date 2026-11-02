@@ -37,6 +37,10 @@ const INITIAL_VIEW = {
   fitBoundsOptions: { padding: 20 },
 }
 
+// Two neighborhood lookouts, a pug and a samoyed, keeping watch from the Laurelhurst shore.
+// Placed roughly on the shoreline, deliberately not on anyone's house.
+const LOOKOUTS = { latitude: 47.6505, longitude: -122.2722 }
+
 const POD_COLORS: Record<string, string> = { J: '#0369a1', K: '#7c3aed', L: '#047857', SRKW: '#0f766e', Biggs: '#b45309' }
 
 function trackColor(t: Track): string {
@@ -184,6 +188,12 @@ export function Map({
               )
             }),
           )}
+        <Marker latitude={LOOKOUTS.latitude} longitude={LOOKOUTS.longitude} anchor="bottom-left" offset={[2, -4]} style={{ zIndex: 0 }}>
+          <span className="lookouts" title="On whale watch: the Laurelhurst lookouts">
+            <img className="pixel-art" src="/pixel/pug.png" width={42} height={39} alt="A pug on his armchair" draggable={false} />
+            <img className="pixel-art" src="/pixel/samoyed.png" width={44} height={44} alt="A smiling samoyed" draggable={false} />
+          </span>
+        </Marker>
         <Marker latitude={ALERT_CONFIG.home.latitude} longitude={ALERT_CONFIG.home.longitude} anchor="center">
           <span className="home-marker" title={`${ALERT_CONFIG.home.name}: the alert measures distance from here`}>
             ★ {ALERT_CONFIG.home.name}

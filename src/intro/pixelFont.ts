@@ -16,6 +16,7 @@ const GLYPHS: Record<string, string[]> = {
   '.': ['...', '...', '...', '...', '.#.'], ',': ['...', '...', '...', '.#.', '#..'], "'": ['.#.', '.#.', '...', '...', '...'],
   ':': ['...', '.#.', '...', '.#.', '...'], '!': ['.#.', '.#.', '.#.', '...', '.#.'], '?': ['##.', '..#', '.#.', '...', '.#.'],
   '-': ['...', '...', '###', '...', '...'], ' ': ['...', '...', '...', '...', '...'],
+  '>': ['#..', '.#.', '..#', '.#.', '#..'], '/': ['..#', '..#', '.#.', '#..', '#..'], '~': ['...', '.#.', '#.#', '...', '...'],
 }
 
 export function textWidth(text: string): number {
@@ -35,4 +36,21 @@ export function drawText(ctx: CanvasRenderingContext2D, text: string, x: number,
     }
     cx += 4
   }
+}
+
+/** Splits text into lines that fit within maxWidth pixels, breaking between words. */
+export function wrapText(text: string, maxWidth: number): string[] {
+  const maxChars = Math.max(1, Math.floor((maxWidth + 1) / 4))
+  const lines: string[] = []
+  let line = ''
+  for (const word of text.split(' ')) {
+    const next = line ? `${line} ${word}` : word
+    if (next.length <= maxChars) line = next
+    else {
+      if (line) lines.push(line)
+      line = word
+    }
+  }
+  if (line) lines.push(line)
+  return lines
 }

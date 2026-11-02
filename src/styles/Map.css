@@ -78,3 +78,7 @@
 }
 .latest-button:hover { background: #fef9c3; }
 .latest-dot { width: 9px; height: 9px; border-radius: 50%; background: #facc15; box-shadow: 0 0 0 2px #0b2545; }
+
+/* The pug and samoyed lookouts */
+.lookouts { display: flex; align-items: flex-end; gap: 2px; pointer-events: auto; filter: drop-shadow(2px 2px 0 rgba(11, 37, 69, 0.35)); }
+.lookouts img { display: block; image-rendering: pixelated; }

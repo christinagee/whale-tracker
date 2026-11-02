@@ -1,6 +1,6 @@
 // Pixel-art drawing for the intro: Daniel's office and the dachshund.
 // Everything is drawn at 192x144 and scaled up with crisp pixels.
-import { drawText, textWidth } from './pixelFont'
+import { drawText, textWidth, wrapText } from './pixelFont'
 
 export const W = 192
 export const H = 144
@@ -467,6 +467,130 @@ export function drawOpeningWindow(ctx: Ctx, p: number) {
       px(ctx, x + ox + 1, y + oy + 1, '#ffffff')
     }
   }
+}
+
+// ── Claude Code in a terminal window ────────────────────────
+
+export const PROMPT = 'WHERE TO WHALE WATCH IN SEATTLE?'
+export const REPLY = 'CHRISTINA MADE A CUSTOM WHALE LOCATOR FOR DANIEL.'
+const TERM = { bg: '#1e1d1c', bar: '#2d2c2a', text: '#ece8e1', dim: '#8d8a84', orange: '#d97757' }
+
+export interface TerminalStep {
+  /** 0..1 window opening from the orcas folder */
+  open: number
+  /** 0..1 how much of the question Bean has typed */
+  typed: number
+  /** show the "thinking" line */
+  thinking: boolean
+  /** 0..1 how much of Claude's reply is shown */
+  reply: number
+  /** show "Proceed?" with Yes / No */
+  choice: boolean
+  /** Yes is highlighted (hovered or clicked) */
+  yesOn: boolean
+  /** animation time (ms), for blinking */
+  t: number
+}
+
+function terminalRect(width: number) {
+  return { x: 6, y: 13, w: width - 12, h: H - 22 }
+}
+
+/** A little orange sparkle, Claude-style. */
+function sparkle(ctx: Ctx, x: number, y: number) {
+  for (const [dx, dy] of [[2, 0], [2, 1], [2, 3], [2, 4], [0, 2], [1, 2], [3, 2], [4, 2], [1, 1], [3, 1], [1, 3], [3, 3]]) px(ctx, x + dx, y + dy, TERM.orange)
+}
+
+/** Draws the terminal and returns where the Yes button is (for the paw cursor). */
+export function drawClaudeTerminal(ctx: Ctx, step: TerminalStep): { x: number; y: number; w: number; h: number } {
+  const width = ctx.canvas.width
+  const to = terminalRect(width)
+  const icon = orcasIcon(width)
+  const e = 1 - Math.pow(1 - step.open, 3)
+  const x = Math.round(icon.x + (to.x - icon.x) * e)
+  const y = Math.round(icon.y + (to.y - icon.y) * e)
+  const w = Math.round(icon.w + (to.w - icon.w) * e)
+  const h = Math.round(icon.h + (to.h - icon.h) * e)
+
+  // layout (always computed for the finished window, so the Yes button doesn't move)
+  const inner = to.w - 8
+  const qLines = wrapText(`> ${PROMPT}`, inner)
+  const rLines = wrapText(REPLY, inner - 6)
+  const qy = to.y + 29
+  const ty = qy + qLines.length * 7 + 4
+  const ry = ty
+  const cy = ry + rLines.length * 7 + 5
+  const yes = { x: to.x + 4, y: cy + 8, w: textWidth('YES') + 6, h: 9 }
+  const no = { x: yes.x + yes.w + 4, y: yes.y, w: textWidth('NO') + 6, h: 9 }
+
+  rect(ctx, x, y, w, h, '#000000')
+  rect(ctx, x + 1, y + 1, w - 2, 8, TERM.bar)
+  rect(ctx, x + 1, y + 9, w - 2, h - 10, TERM.bg)
+  if (step.open < 1) return yes
+
+  // title bar
+  for (const [i, c] of ['#ff5f57', '#febc2e', '#28c840'].entries()) rect(ctx, to.x + 3 + i * 5, to.y + 3, 3, 3, c)
+  const title = 'ORCAS'
+  drawText(ctx, title, to.x + Math.round((to.w - textWidth(title)) / 2), to.y + 3, TERM.dim)
+  // header
+  sparkle(ctx, to.x + 4, to.y + 12)
+  drawText(ctx, 'CLAUDE CODE', to.x + 11, to.y + 12, TERM.orange)
+  drawText(ctx, '~/ORCAS', to.x + 11, to.y + 19, TERM.dim)
+  rect(ctx, to.x + 3, to.y + 26, to.w - 6, 1, '#3a3936')
+
+  // Bean's question, typed out
+  let chars = Math.floor(step.typed * PROMPT.length) + 2 // "> " is there from the start
+  qLines.forEach((line, i) => {
+    const shown = line.slice(0, Math.max(0, chars))
+    chars -= line.length + 1
+    drawText(ctx, shown, to.x + 4, qy + i * 7, TERM.text)
+  })
+  if (step.typed < 1 && Math.floor(step.t / 300) % 2 === 0) {
+    // blinking text cursor while typing
+    const done = Math.floor(step.typed * PROMPT.length) + 2
+    let acc = 0
+    for (let i = 0; i < qLines.length; i++) {
+      if (done <= acc + qLines[i].length) {
+        rect(ctx, to.x + 4 + (done - acc) * 4, qy + i * 7, 3, 5, TERM.text)
+        break
+      }
+      acc += qLines[i].length + 1
+    }
+  }
+
+  // thinking...
+  if (step.thinking) {
+    sparkle(ctx, to.x + 4, ty)
+    const dots = '.'.repeat(1 + (Math.floor(step.t / 250) % 3))
+    drawText(ctx, `THINKING${dots}`, to.x + 11, ty, TERM.orange)
+  }
+
+  // Claude's reply
+  if (step.reply > 0) {
+    rect(ctx, to.x + 4, ry + 1, 3, 3, TERM.orange)
+    let left = Math.floor(step.reply * REPLY.length)
+    rLines.forEach((line, i) => {
+      drawText(ctx, line.slice(0, Math.max(0, left)), to.x + 10, ry + i * 7, TERM.text)
+      left -= line.length + 1
+    })
+  }
+
+  // Proceed? Yes / No
+  if (step.choice) {
+    drawText(ctx, 'PROCEED?', to.x + 4, cy, TERM.text)
+    rect(ctx, yes.x, yes.y, yes.w, yes.h, step.yesOn ? TERM.orange : TERM.bg)
+    rect(ctx, yes.x, yes.y, yes.w, 1, TERM.orange)
+    rect(ctx, yes.x, yes.y + yes.h - 1, yes.w, 1, TERM.orange)
+    rect(ctx, yes.x, yes.y, 1, yes.h, TERM.orange)
+    rect(ctx, yes.x + yes.w - 1, yes.y, 1, yes.h, TERM.orange)
+    drawText(ctx, 'YES', yes.x + 3, yes.y + 2, step.yesOn ? TERM.bg : TERM.orange)
+    rect(ctx, no.x, no.y, no.w, 1, TERM.dim)
+    rect(ctx, no.x, no.y + no.h - 1, no.w, 1, TERM.dim)
+    rect(ctx, no.x, no.y, 1, no.h, TERM.dim)
+    rect(ctx, no.x + no.w - 1, no.y, 1, no.h, TERM.dim)
+    drawText(ctx, 'NO', no.x + 3, no.y + 2, TERM.dim)
+  }
+  return yes
 }
 
 export function drawCaption(ctx: Ctx, text: string) {
