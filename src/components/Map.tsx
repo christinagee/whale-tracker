@@ -37,9 +37,9 @@ const INITIAL_VIEW = {
   fitBoundsOptions: { padding: 20 },
 }
 
-// Two neighborhood lookouts, a pug and a samoyed, keeping watch from the Laurelhurst shore.
-// Placed roughly on the shoreline, deliberately not on anyone's house.
-const LOOKOUTS = { latitude: 47.6505, longitude: -122.2722 }
+// Two neighborhood lookouts, a pug and a samoyed, keeping watch from Laurelhurst.
+// Placed at Laurelhurst Park (a public spot in the middle of the neighborhood), not at anyone's house.
+const LOOKOUTS = { latitude: 47.6598, longitude: -122.2782 }
 
 const POD_COLORS: Record<string, string> = { J: '#0369a1', K: '#7c3aed', L: '#047857', SRKW: '#0f766e', Biggs: '#b45309' }
 
