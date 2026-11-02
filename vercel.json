@@ -6,6 +6,9 @@
   "functions": {
     "api/boats.ts": {
       "maxDuration": 40
+    },
+    "api/lamp.ts": {
+      "maxDuration": 30
     }
   }
 }

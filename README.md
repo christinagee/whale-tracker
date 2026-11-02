@@ -65,6 +65,20 @@ Hood Canal, whales heading away, and species other than orcas are ignored. The d
 
 To add or remove a boat, edit `WHALE_WATCH_FLEET` in `src/data/whaleWatchFleet.ts` (you need the boat's 9-digit MMSI; look it up on VesselFinder or MarineTraffic).
 
+## Whale lamp (`/api/lamp`, LIFX bulb)
+
+A LIFX color bulb lights up when orcas head toward Seattle: **amber** = watch, **cyan** = approaching (with a few pulses when it starts), **blue** = here, and back to warm white when the alert ends.
+
+How it works: [cron-job.org](https://cron-job.org) (free) calls `/api/lamp?key=…` every minute. The function reads `/api/alert`, checks the bulb, and only changes it when needed. Because it reads the bulb's own color, it needs no storage: if someone turns the bulb off during an alert it stays off (unless the alert gets more urgent), and normal use with Google Home or the LIFX app isn't overridden.
+
+Setup:
+1. Set up the LIFX Color bulb in the LIFX app (optionally name it "Whale Lamp" and add it to Google Home).
+2. Create a personal access token at cloud.lifx.com (Settings → Personal access tokens).
+3. In Vercel → Settings → Environment Variables add `LIFX_TOKEN` (the token), `LAMP_SECRET` (any long random text), and optionally `LIFX_SELECTOR` (e.g. `label:Whale Lamp`; default is all LIFX bulbs). Redeploy.
+4. At cron-job.org create a job that calls `https://<your-site>/api/lamp?key=<LAMP_SECRET>` every minute.
+
+Test it anytime with `&test=watch`, `&test=approaching`, `&test=here` or `&test=none` added to that address. The page it returns says what the lamp did, or what went wrong.
+
 ## Environment variables
 
 Set these in Vercel → Project → Settings → Environment Variables. See `.env.example`.
@@ -73,6 +87,9 @@ Set these in Vercel → Project → Settings → Environment Variables. See `.en
 | --- | --- | --- |
 | `ACARTIA_TOKEN` | No | Acartia API token, only if Acartia starts requiring one |
 | `AISSTREAM_API_KEY` | For boats | Free API key from aisstream.io |
+| `LIFX_TOKEN` | For the lamp | LIFX personal access token |
+| `LAMP_SECRET` | For the lamp | Any long random text; the scheduler sends it as `?key=` |
+| `LIFX_SELECTOR` | No | Which bulb(s), e.g. `label:Whale Lamp` (default: all) |
 | `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
 
 ## Project structure
