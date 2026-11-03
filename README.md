@@ -67,17 +67,18 @@ To add or remove a boat, edit `WHALE_WATCH_FLEET` in `src/data/whaleWatchFleet.t
 
 ## Whale lamp (`/api/lamp`, LIFX bulb)
 
-A LIFX color bulb lights up when orcas head toward Seattle: **amber** = watch, **cyan** = approaching (with a few pulses when it starts), **blue** = here, and back to warm white when the alert ends.
+When orcas get within about **30 minutes of Seattle** (or are already in Seattle waters), a LIFX color bulb turns **blue for 30 minutes**, then goes back to exactly what it was showing before (color, white temperature and brightness, e.g. the LIFX "Natural" white). The same orcas won't light it up again; new orcas after an hour of quiet will.
 
-How it works: [cron-job.org](https://cron-job.org) (free) calls `/api/lamp?key=…` every minute. The function reads `/api/alert`, checks the bulb, and only changes it when needed. Because it reads the bulb's own color, it needs no storage: if someone turns the bulb off during an alert it stays off (unless the alert gets more urgent), and normal use with Google Home or the LIFX app isn't overridden.
+How it works: [cron-job.org](https://cron-job.org) (free) calls `/api/lamp?key=…` every minute. The function reads `/api/alert`, checks the bulb, and only changes it when needed. The bulb's previous setting and the 30-minute timer are kept in a small Redis store (free Upstash plan; only touched during alerts). If someone switches the lamp off while it's blue, it stays off; if someone changes its color, it's left alone. Normal use with Google Home or the LIFX app is never overridden. The rules are in `LAMP_CONFIG` in `src/lib/lamp.ts`.
 
 Setup:
-1. Set up the LIFX Color bulb in the LIFX app (optionally name it "Whale Lamp" and add it to Google Home).
+1. Set up the LIFX Color bulb in the LIFX app (any name, e.g. "Japandi lamp").
 2. Create a personal access token at cloud.lifx.com (Settings → Personal access tokens).
-3. In Vercel → Settings → Environment Variables add `LIFX_TOKEN` (the token), `LAMP_SECRET` (any long random text), and optionally `LIFX_SELECTOR` (e.g. `label:Whale Lamp`; default is all LIFX bulbs). Redeploy.
-4. At cron-job.org create a job that calls `https://<your-site>/api/lamp?key=<LAMP_SECRET>` every minute.
+3. In Vercel → Storage, create a free **Upstash for Redis** database and connect it to this project (this adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`).
+4. In Vercel → Settings → Environment Variables add `LIFX_TOKEN` (the token), `LAMP_SECRET` (any long random text), and `LIFX_SELECTOR` (e.g. `label:Japandi lamp`; default is all LIFX bulbs). Redeploy.
+5. At cron-job.org create a job that calls `https://<your-site>/api/lamp?key=<LAMP_SECRET>` every minute.
 
-Test it anytime with `&test=watch`, `&test=approaching`, `&test=here` or `&test=none` added to that address. The page it returns says what the lamp did, or what went wrong.
+Test it with `&test=blue` (blue now; add `&minutes=2` for a short hold) and `&test=normal` (back to normal now). The page it returns says what the lamp did, or what went wrong.
 
 ## Environment variables
 
@@ -89,7 +90,8 @@ Set these in Vercel → Project → Settings → Environment Variables. See `.en
 | `AISSTREAM_API_KEY` | For boats | Free API key from aisstream.io |
 | `LIFX_TOKEN` | For the lamp | LIFX personal access token |
 | `LAMP_SECRET` | For the lamp | Any long random text; the scheduler sends it as `?key=` |
-| `LIFX_SELECTOR` | No | Which bulb(s), e.g. `label:Whale Lamp` (default: all) |
+| `LIFX_SELECTOR` | No | Which bulb(s), e.g. `label:Japandi lamp` (default: all) |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | For the lamp | Upstash Redis (added automatically when connected in Vercel → Storage) |
 | `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
 
 ## Project structure
