@@ -12,6 +12,7 @@ import { BoatDetail } from './components/BoatDetail'
 import { BoatIcon } from './components/BoatIcon'
 import { Intro } from './intro/Intro'
 import { AlertBanner } from './components/AlertBanner'
+import { LampButton } from './components/LampButton'
 import { Map } from './components/Map'
 import { SightingsList } from './components/SightingsList'
 import { SightingDetail } from './components/SightingDetail'
@@ -184,8 +185,19 @@ export default function App() {
             <p className="tagline">Salish Sea sightings</p>
           </div>
         </div>
-        <div className={`status ${data?.live ? 'status-live' : 'status-sample'}`}>
-          {isLoading ? 'Loading…' : data?.live ? `Live · updated ${timeAgo(new Date(dataUpdatedAt))}` : 'Sample data'}
+        <div className="header-right">
+          <div className={`status ${data?.live ? 'status-live' : 'status-sample'}`}>
+            {isLoading ? (
+              'Loading…'
+            ) : data?.live ? (
+              <>
+                Live<span className="status-detail"> · updated {timeAgo(new Date(dataUpdatedAt))}</span>
+              </>
+            ) : (
+              'Sample data'
+            )}
+          </div>
+          <LampButton />
         </div>
       </header>
 

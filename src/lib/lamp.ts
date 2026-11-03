@@ -73,6 +73,8 @@ export interface DecideOptions {
   test?: 'blue' | 'normal'
   /** Override the hold time (testing). */
   holdMinutes?: number
+  /** Someone pressed "Back to Natural" on the website. */
+  revert?: boolean
 }
 
 /**
@@ -81,6 +83,7 @@ export interface DecideOptions {
  * - 30 minutes later: go back to the remembered setting. If someone switched the lamp off in the
  *   meantime, the setting comes back but it stays off.
  * - If someone changes the color while it's blue, it's theirs again: nothing is undone later.
+ * - "Back to Natural" on the website (revert) ends the blue early; the same orcas won't relight it.
  * - Otherwise the lamp is left alone, so normal use (the LIFX app, Google Home) is never overridden.
  */
 export function decideLamp(
@@ -96,6 +99,15 @@ export function decideLamp(
   const hold = minutes(options.holdMinutes ?? config.holdMinutes)
   const active = memory && !memory.done ? memory : null
   const seen = (m: LampMemory): LampMemory => (trigger ? { ...m, lastTriggerAt: iso } : m)
+
+  if (options.revert) {
+    // Back to normal now. The memory is kept, so the same orcas won't turn it blue again.
+    if (active && isBlue(bulb)) {
+      return { kind: 'restore', to: active.previous, keepOff: bulb.power === 'off', memory: { ...active, done: true }, reason: 'Back to normal' }
+    }
+    if (active) return { kind: 'remember', memory: { ...active, done: true }, reason: 'The lamp was already changed by hand' }
+    return { kind: 'nothing', reason: 'The lamp is already on its normal setting' }
+  }
 
   if (options.test === 'normal') {
     if (active && isBlue(bulb)) {

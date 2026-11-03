@@ -78,6 +78,8 @@ Setup:
 4. In Vercel → Settings → Environment Variables add `LIFX_TOKEN` (the token), `LAMP_SECRET` (any long random text), and `LIFX_SELECTOR` (e.g. `label:Japandi lamp`; default is all LIFX bulbs). Redeploy.
 5. At cron-job.org create a job that calls `https://<your-site>/api/lamp?key=<LAMP_SECRET>` every minute.
 
+**"Back to Natural" button:** the lamp icon in the website's header opens a small window where, with the password in `LAMP_PASSWORD`, anyone in the house can end the blue early (`POST /api/lamp`). The same orcas won't turn it blue again. After 10 wrong passwords in an hour it stops accepting tries for that hour. The password can be remembered on each device.
+
 Test it with `&test=blue` (blue now; add `&minutes=2` for a short hold) and `&test=normal` (back to normal now). The page it returns says what the lamp did, or what went wrong.
 
 ## Environment variables
@@ -90,6 +92,7 @@ Set these in Vercel → Project → Settings → Environment Variables. See `.en
 | `AISSTREAM_API_KEY` | For boats | Free API key from aisstream.io |
 | `LIFX_TOKEN` | For the lamp | LIFX personal access token |
 | `LAMP_SECRET` | For the lamp | Any long random text; the scheduler sends it as `?key=` |
+| `LAMP_PASSWORD` | For the lamp button | Password for the website's "Back to Natural" button |
 | `LIFX_SELECTOR` | No | Which bulb(s), e.g. `label:Japandi lamp` (default: all) |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | For the lamp | Upstash Redis (added automatically when connected in Vercel → Storage) |
 | `VITE_MAP_STYLE_URL` | No | Map style. Defaults to OpenFreeMap "liberty" (free, no key) |
