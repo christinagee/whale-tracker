@@ -482,7 +482,7 @@ export function drawOpeningWindow(ctx: Ctx, p: number) {
 
 // ── Claude Code in a terminal window ────────────────────────
 
-export const PROMPT = 'WHERE TO WHALE WATCH IN SEATTLE?'
+export const PROMPT = 'WHERE CAN WE WHALE WATCH IN SEATTLE?'
 export const REPLY = 'CHRISTINA MADE A CUSTOM WHALE LOCATOR FOR DANIEL.'
 const TERM = { bg: '#1e1d1c', bar: '#2d2c2a', text: '#ece8e1', dim: '#8d8a84', orange: '#d97757' }
 
