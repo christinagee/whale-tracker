@@ -6,7 +6,7 @@
 //   LIFX_TOKEN     personal access token from cloud.lifx.com (required)
 //   LAMP_SECRET    any long random text; the scheduler must send it as ?key=... (required)
 //   LIFX_SELECTOR  which bulb(s) to control, e.g. "label:Japandi lamp" (default: all LIFX bulbs)
-//   KV_REST_API_URL / KV_REST_API_TOKEN  the lamp's memory: a free Upstash Redis store, added
+//   KV_REST_API_URL / KV_REST_API_TOKEN  the lamp's memory (any prefix works): a free Upstash Redis store, added
 //                  automatically when you connect one under Vercel → Storage
 //                  (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN also work)
 //
@@ -28,10 +28,19 @@ async function lifx(path: string, init: RequestInit, token: string) {
   return text ? JSON.parse(text) : null
 }
 
+/** Upstash settings: KV_REST_API_URL etc., or the same with any other prefix chosen when connecting. */
+function redisEnv(suffix: string, fallback: string): string | undefined {
+  const env = process.env
+  if (env[`KV${suffix}`]) return env[`KV${suffix}`]
+  if (env[fallback]) return env[fallback]
+  const key = Object.keys(env).find((k) => k.endsWith(suffix) && !k.includes('READ_ONLY') && env[k])
+  return key ? env[key] : undefined
+}
+
 /** One Redis command over Upstash's REST API. */
 async function redis(command: (string | number)[]): Promise<unknown> {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+  const url = redisEnv('_REST_API_URL', 'UPSTASH_REDIS_REST_URL')
+  const token = redisEnv('_REST_API_TOKEN', 'UPSTASH_REDIS_REST_TOKEN')
   if (!url || !token) throw new Error('The lamp needs its memory: connect a free Upstash Redis store under Vercel → Storage, then redeploy')
   const res = await fetch(url, {
     method: 'POST',
