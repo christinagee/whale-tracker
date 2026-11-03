@@ -40,6 +40,9 @@ const INITIAL_VIEW = {
 // Two neighborhood lookouts, a pug and a samoyed, keeping watch from Laurelhurst.
 // Placed at Laurelhurst Park (a public spot in the middle of the neighborhood), not at anyone's house.
 const LOOKOUTS = { latitude: 47.6598, longitude: -122.2782 }
+// Bean, the dachshund from the intro, on watch from Denny Park (a public park a few blocks away,
+// not a specific building).
+const BEAN_SPOT = { latitude: 47.619, longitude: -122.3412 }
 
 const POD_COLORS: Record<string, string> = { J: '#0369a1', K: '#7c3aed', L: '#047857', SRKW: '#0f766e', Biggs: '#b45309' }
 
@@ -192,6 +195,11 @@ export function Map({
           <span className="lookouts" title="On whale watch: the Laurelhurst lookouts">
             <img className="pixel-art" src="/pixel/pug.png" width={42} height={39} alt="A pug on his armchair" draggable={false} />
             <img className="pixel-art" src="/pixel/samoyed.png" width={44} height={44} alt="A smiling samoyed" draggable={false} />
+          </span>
+        </Marker>
+        <Marker latitude={BEAN_SPOT.latitude} longitude={BEAN_SPOT.longitude} anchor="bottom" style={{ zIndex: 0 }}>
+          <span className="lookouts" title="Bean, on whale watch">
+            <img className="pixel-art" src="/pixel/bean.png" width={70} height={32} alt="Bean the dachshund in his sweater" draggable={false} />
           </span>
         </Marker>
         <Marker latitude={ALERT_CONFIG.home.latitude} longitude={ALERT_CONFIG.home.longitude} anchor="center">
