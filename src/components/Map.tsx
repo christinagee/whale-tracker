@@ -203,7 +203,7 @@ export function Map({
           </span>
         </Marker>
         <Marker latitude={ALERT_CONFIG.home.latitude} longitude={ALERT_CONFIG.home.longitude} anchor="center">
-          <span className="home-marker" title={`${ALERT_CONFIG.home.name}: the alert measures distance from here`}>
+          <span className="home-marker" title={`${ALERT_CONFIG.home.name}: distances in the alert are measured from here`}>
             ★ {ALERT_CONFIG.home.name}
           </span>
         </Marker>
