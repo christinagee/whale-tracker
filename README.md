@@ -54,8 +54,8 @@ A lamp or other device can check this address every minute or so:
 | --- | --- | --- | --- |
 | 0 | none | off | Nothing relevant |
 | 1 | watch | amber, slow breathe | Orcas in Puget Sound within ~60 km of Seattle in the last 2 hr, direction unknown; or whale sounds on a nearby hydrophone in the last hour |
-| 2 | approaching | cyan, pulse | Orcas within ~60 km heading toward Seattle: "southbound" north of Seattle or "northbound" south of it, or later sightings getting closer. Includes an arrival estimate at ~7 km/h, usually 1–3 hr of warning |
-| 3 | here | blue, solid | Orcas within ~8 km of Seattle in the last 90 min |
+| 2 | approaching | cyan, pulse | Orcas within ~60 km heading toward Seattle: "southbound" north of Seattle or "northbound" south of it, or later sightings getting closer. Includes an arrival estimate using the pod's own pace toward Seattle, measured from its sightings over the last 2½ hr (median, kept between 1.5 and 10 km/h); with only one report it assumes 7 km/h, or 4 km/h if the report says slow/foraging |
+| 3 | here | blue, solid | Orcas within ~12.5 km of Seattle (north past Carkeek Park) in the last 90 min |
 
 Hood Canal, whales heading away, and species other than orcas are ignored. The distances, speed, and home point are in `ALERT_CONFIG` in `src/lib/alert.ts`, and the website banner uses the same code.
 
@@ -67,9 +67,9 @@ To add or remove a boat, edit `WHALE_WATCH_FLEET` in `src/data/whaleWatchFleet.t
 
 ## Whale lamp (`/api/lamp`, LIFX bulb)
 
-When orcas get within about **30 minutes of Seattle** (or are already in Seattle waters), a LIFX color bulb turns **blue for 30 minutes**, then goes back to exactly what it was showing before (color, white temperature and brightness, e.g. the LIFX "Natural" white). The same orcas won't light it up again; new orcas after an hour of quiet will.
+When orcas get within about **45 minutes of Seattle** (or are already in Seattle waters, which reach north past Carkeek Park), a LIFX color bulb turns **blue for 45 minutes**, then goes back to exactly what it was showing before (color, white temperature and brightness, e.g. the LIFX "Natural" white). The same orcas won't light it up again; new orcas after an hour of quiet will.
 
-How it works: [cron-job.org](https://cron-job.org) (free) calls `/api/lamp?key=…` every minute. The function reads `/api/alert`, checks the bulb, and only changes it when needed. The bulb's previous setting and the 30-minute timer are kept in a small Redis store (free Upstash plan; only touched during alerts). If someone switches the lamp off while it's blue, it stays off; if someone changes its color, it's left alone. Normal use with Google Home or the LIFX app is never overridden. The rules are in `LAMP_CONFIG` in `src/lib/lamp.ts`.
+How it works: [cron-job.org](https://cron-job.org) (free) calls `/api/lamp?key=…` every minute. The function reads `/api/alert`, checks the bulb, and only changes it when needed. The bulb's previous setting and the 45-minute timer are kept in a small Redis store (free Upstash plan; only touched during alerts). If someone switches the lamp off while it's blue, it stays off; if someone changes its color, it's left alone. Normal use with Google Home or the LIFX app is never overridden. The rules are in `LAMP_CONFIG` in `src/lib/lamp.ts`.
 
 Setup:
 1. Set up the LIFX Color bulb in the LIFX app (any name, e.g. "Japandi lamp").
@@ -79,6 +79,8 @@ Setup:
 5. At cron-job.org create a job that calls `https://<your-site>/api/lamp?key=<LAMP_SECRET>` every minute.
 
 **"Back to Natural" button:** the lamp icon in the website's header opens a small window where, with the password in `LAMP_PASSWORD`, anyone in the house can end the blue early (`POST /api/lamp`). The same orcas won't turn it blue again. After 10 wrong passwords in an hour it stops accepting tries for that hour. The password can be remembered on each device.
+
+Brief outages at LIFX, the lamp's memory or the sightings feed are skipped quietly (the answer says `"skipped": true` and the next minute tries again); a real problem, like a revoked LIFX token, still shows as a failed check in cron-job.org. Every check finishes within about 25 seconds, under cron-job.org's 30-second limit.
 
 Test it with `&test=blue` (blue now; add `&minutes=2` for a short hold) and `&test=normal` (back to normal now). The page it returns says what the lamp did, or what went wrong.
 

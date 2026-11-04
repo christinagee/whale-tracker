@@ -109,7 +109,7 @@ export function LampButton() {
             onSubmit={submit}
           >
             <h2 id="lamp-title">Whale lamp</h2>
-            <p className="lamp-intro">The lamp turns blue for 30 minutes when orcas are close to Seattle. Set it back to its normal light now:</p>
+            <p className="lamp-intro">The lamp turns blue for 45 minutes when orcas are close to Seattle. Set it back to its normal light now:</p>
             <label className="lamp-field">
               Password
               <input
