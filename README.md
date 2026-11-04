@@ -80,6 +80,8 @@ Setup:
 
 **"Back to Natural" button:** the lamp icon in the website's header opens a small window where, with the password in `LAMP_PASSWORD`, anyone in the house can end the blue early (`POST /api/lamp`). The same orcas won't turn it blue again. After 10 wrong passwords in an hour it stops accepting tries for that hour. The password can be remembered on each device.
 
+Brief outages at LIFX, the lamp's memory or the sightings feed are skipped quietly (the answer says `"skipped": true` and the next minute tries again); a real problem, like a revoked LIFX token, still shows as a failed check in cron-job.org. Every check finishes within about 25 seconds, under cron-job.org's 30-second limit.
+
 Test it with `&test=blue` (blue now; add `&minutes=2` for a short hold) and `&test=normal` (back to normal now). The page it returns says what the lamp did, or what went wrong.
 
 ## Environment variables

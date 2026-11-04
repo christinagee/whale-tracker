@@ -25,14 +25,43 @@ const LIFX = 'https://api.lifx.com/v1/lights'
 const MAX_WRONG_PASSWORDS = 10 // per hour
 const noStore = { 'Cache-Control': 'no-store' }
 
+/** A hiccup in someone else's service (timeout, outage, rate limit): skip this minute, try again next. */
+class Transient extends Error {}
+
+// cron-job.org gives up after 30 s, so the whole check has to finish well before that.
+const BUDGET_MS = 22_000
+let deadline = Date.now() + BUDGET_MS
+const timeLeft = (cap: number) => Math.max(500, Math.min(cap, deadline - Date.now()))
+
+/** fetch with a time limit; network errors and timeouts count as transient. */
+async function fetchSoon(url: string | URL, init: RequestInit, capMs: number): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(timeLeft(capMs)) })
+  } catch (err) {
+    throw new Transient(`${new URL(url).host} didn't answer in time (${err instanceof Error ? err.name : 'error'})`)
+  }
+}
+
 async function lifx(path: string, init: RequestInit, token: string) {
-  const res = await fetch(`${LIFX}/${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
-  })
-  const text = await res.text()
-  if (!res.ok) throw new Error(`LIFX ${init.method ?? 'GET'} ${path} failed: HTTP ${res.status} ${text.slice(0, 200)}`)
-  return text ? JSON.parse(text) : null
+  const req: RequestInit = { ...init, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) } }
+  for (let attempt = 1; ; attempt++) {
+    let res: Response
+    try {
+      res = await fetchSoon(`${LIFX}/${path}`, req, 7000)
+    } catch (err) {
+      if (attempt < 2 && deadline - Date.now() > 8000) continue // one quick retry (setting a color is safe to repeat)
+      throw err
+    }
+    const text = await res.text()
+    if (res.ok) return text ? JSON.parse(text) : null
+    const msg = `LIFX ${init.method ?? 'GET'} ${path} failed: HTTP ${res.status} ${text.slice(0, 200)}`
+    const temporary = res.status === 429 || res.status >= 500
+    if (temporary && attempt < 2 && deadline - Date.now() > 8000) {
+      await new Promise((r) => setTimeout(r, 800))
+      continue
+    }
+    throw temporary ? new Transient(msg) : new Error(msg) // 401 (bad token) or 404 (no such bulb) are real problems
+  }
 }
 
 /** Upstash settings: KV_REST_API_URL etc., or the same with any other prefix chosen when connecting. */
@@ -49,12 +78,13 @@ async function redis(command: (string | number)[]): Promise<unknown> {
   const url = redisEnv('_REST_API_URL', 'UPSTASH_REDIS_REST_URL')
   const token = redisEnv('_REST_API_TOKEN', 'UPSTASH_REDIS_REST_TOKEN')
   if (!url || !token) throw new Error('The lamp needs its memory: connect a free Upstash Redis store under Vercel → Storage, then redeploy')
-  const res = await fetch(url, {
+  const res = await fetchSoon(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(command),
-  })
+  }, 5000)
   const body = (await res.json().catch(() => ({}))) as { result?: unknown; error?: string }
+  if (res.status === 429 || res.status >= 500) throw new Transient(`Lamp memory (Redis) is busy: HTTP ${res.status}`)
   if (!res.ok || body.error) throw new Error(`Lamp memory (Redis) failed: ${body.error ?? `HTTP ${res.status}`}`)
   return body.result
 }
@@ -100,7 +130,13 @@ async function runLamp(token: string, trigger: boolean, options: DecideOptions):
   const save = (m: LampMemory) => redis(['SET', memoryKey, JSON.stringify(m), 'EX', 3 * 24 * 3600])
   if (action.kind === 'blue') {
     await save(action.memory) // remember the current setting first, so it can always be put back
-    await lifx(`${selector}/state`, { method: 'PUT', body: JSON.stringify({ power: 'on', color: BLUE_COLOR, duration: 2 }) }, token)
+    try {
+      await lifx(`${selector}/state`, { method: 'PUT', body: JSON.stringify({ power: 'on', color: BLUE_COLOR, duration: 2 }) }, token)
+    } catch (err) {
+      // the bulb didn't change: undo the memory so the next minute's check tries again
+      await (memory ? save(memory) : redis(['DEL', memoryKey])).catch(() => {})
+      throw err
+    }
   } else if (action.kind === 'restore') {
     const state: Record<string, unknown> = { color: colorString(action.to), duration: 3 }
     if (!action.keepOff) state.power = action.to.power
@@ -125,6 +161,7 @@ const TEST_NORMAL = ['normal', 'none', 'off']
 
 /** The every-minute check (and tests). */
 export async function GET(request: Request): Promise<Response> {
+  deadline = Date.now() + BUDGET_MS
   const url = new URL(request.url)
   const secret = process.env.LAMP_SECRET
   const token = process.env.LIFX_TOKEN
@@ -145,8 +182,15 @@ export async function GET(request: Request): Promise<Response> {
     let trigger = false
     let alertInfo: Pick<Alert, 'state' | 'etaMinutes' | 'title'> | null = null
     if (!test) {
-      const res = await fetch(new URL('/api/alert', url), { headers: { Accept: 'application/json' } })
-      const body = (await res.json()) as Partial<Alert> & { ok?: boolean }
+      let res: Response | null = null
+      let body: Partial<Alert> & { ok?: boolean } = {}
+      try {
+        res = await fetchSoon(new URL('/api/alert', url), { headers: { Accept: 'application/json' } }, 12_000)
+        body = (await res.json()) as Partial<Alert> & { ok?: boolean }
+      } catch {
+        res = null
+      }
+      if (!res) return Response.json({ ok: false, skipped: true, error: "Couldn't check the alert this minute; leaving the lamp alone" }, { headers: noStore })
       if (!res.ok || body.ok === false || !body.state) {
         return Response.json({ ok: false, error: "Couldn't check the alert; leaving the lamp alone" }, { headers: noStore })
       }
@@ -156,6 +200,8 @@ export async function GET(request: Request): Promise<Response> {
     const outcome = await runLamp(token, trigger, { test, holdMinutes })
     return Response.json({ ...outcome, ...(alertInfo ? { alert: alertInfo } : {}) }, { headers: noStore })
   } catch (err) {
+    // A brief outage elsewhere isn't worth an email: report it, and the next minute's check tries again.
+    if (err instanceof Transient) return Response.json({ ok: false, skipped: true, error: err.message }, { headers: noStore })
     return Response.json({ ok: false, error: String(err instanceof Error ? err.message : err) }, { status: 502, headers: noStore })
   }
 }
@@ -168,6 +214,7 @@ function samePassword(given: string, expected: string): boolean {
 
 /** The website's "Back to Natural" button. */
 export async function POST(request: Request): Promise<Response> {
+  deadline = Date.now() + BUDGET_MS
   const password = process.env.LAMP_PASSWORD
   const token = process.env.LIFX_TOKEN
   if (!password || !token) {
