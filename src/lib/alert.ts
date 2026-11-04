@@ -13,8 +13,13 @@ export const ALERT_CONFIG = {
   hereKm: 8,
   /** Orcas in Puget Sound within this distance can trigger a heads-up. */
   approachKm: 60,
-  /** Typical travelling speed, used for the arrival estimate. */
+  /** Typical travelling speed, used for the arrival estimate when the pod's own pace isn't known. */
   swimKmh: 7,
+  /** Used instead when the report says they're going slowly (foraging, milling, resting). */
+  slowSwimKmh: 4,
+  /** The pod's measured pace is kept within this range, so one odd report can't throw it off. */
+  paceMinKmh: 1.5,
+  paceMaxKmh: 10,
   /** Ignore sightings older than this (orcas move on quickly). */
   sightingMaxAgeMin: 120,
   hereMaxAgeMin: 90,
@@ -34,6 +39,9 @@ export interface Alert {
   message: string
   /** Rough minutes until the whales could reach Seattle (approaching only). */
   etaMinutes: number | null
+  /** Speed toward Seattle used for the estimate (km/h), and whether it was measured from the pod's own sightings. */
+  paceKmh?: number | null
+  paceMeasured?: boolean
   distanceKm: number | null
   sightingId: string | null
   hydrophoneId: string | null
@@ -67,6 +75,36 @@ function whoLabel(s: Sighting): string {
   return pods.length > 0 ? `Orcas (${pods.map((p) => PODS[p].name).join(', ')})` : 'Orcas'
 }
 
+const SLOW_WORDS = /\b(slow(ly)?|forag\w*|mill\w*|meander\w*|resting|logging|lingering)\b/i
+
+/**
+ * How fast this group is actually closing in on Seattle (km/h), from its earlier sightings:
+ * reports 20 min to 2.5 hr before this one, within 15 km of it. Uses the median, so one odd
+ * report doesn't throw it off, and keeps it within a sensible range. null if there's nothing to go on.
+ */
+export function measuredPace(s: Sighting, orcas: Sighting[], home: Point, config = ALERT_CONFIG): number | null {
+  const dist = distanceKm(home, s)
+  const speeds = orcas
+    .filter((o) => {
+      const gap = (s.time.getTime() - o.time.getTime()) / 60_000
+      return o.id !== s.id && gap >= 20 && gap <= 150 && distanceKm(o, s) <= 15
+    })
+    .map((o) => (distanceKm(home, o) - dist) / ((s.time.getTime() - o.time.getTime()) / 3_600_000))
+    .sort((a, b) => a - b)
+  if (speeds.length === 0) return null
+  const mid = speeds.length / 2
+  const median = speeds.length % 2 ? speeds[Math.floor(mid)] : (speeds[mid - 1] + speeds[mid]) / 2
+  return Math.min(config.paceMaxKmh, Math.max(config.paceMinKmh, median))
+}
+
+function paceWords(kmh: number): string {
+  const n = kmh < 3 ? kmh.toFixed(1).replace(/\.0$/, '') : String(Math.round(kmh))
+  if (kmh < 2) return `Barely getting closer (about ${n} km/h)`
+  if (kmh < 4.5) return `Moving slowly (about ${n} km/h)`
+  if (kmh > 8.5) return `Moving fast (about ${n} km/h)`
+  return `Travelling about ${n} km/h`
+}
+
 function roundEta(minutes: number): number {
   return minutes < 60 ? Math.max(5, Math.round(minutes / 5) * 5) : Math.round(minutes / 15) * 15
 }
@@ -79,6 +117,8 @@ export function formatEta(minutes: number): string {
 }
 
 interface Candidate {
+  paceKmh?: number | null
+  paceMeasured?: boolean
   state: AlertState
   score: number
   title: string
@@ -144,16 +184,21 @@ export function computeAlert(
 
     if (towards === false) continue // heading away from Seattle
 
+    // Their pace: measured from this group's own recent sightings when possible, otherwise a typical speed.
+    const measured = towards ? measuredPace(s, orcas, home, config) : null
+    const pace = measured ?? (SLOW_WORDS.test(s.comments) ? config.slowSwimKmh : config.swimKmh)
     // Subtract how far they've probably already travelled since the report.
-    const remaining = Math.max(dist - config.hereKm, 0) - (towards ? (config.swimKmh * age) / 60 : 0)
+    const remaining = Math.max(dist - config.hereKm, 0) - (towards ? (pace * age) / 60 : 0)
     if (towards) {
-      const eta = roundEta(Math.max(remaining, 0) / config.swimKmh * 60)
+      const eta = roundEta(Math.max(remaining, 0) / pace * 60)
       candidates.push({
         state: 'approaching',
         score: 2000 - dist,
         title: `${whoLabel(s)} heading toward ${home.name}`,
-        message: `${heading ? `${heading[0].toUpperCase()}${heading.slice(1)}bound, ` : 'Moving closer, '}${where} (reported ${Math.round(age)} min ago). Could reach ${home.name} in about ${formatEta(eta)}.`,
+        message: `${heading ? `${heading[0].toUpperCase()}${heading.slice(1)}bound, ` : 'Moving closer, '}${where} (reported ${Math.round(age)} min ago). ${measured !== null ? `${paceWords(measured)}, so they` : 'They'} could reach ${home.name} in about ${formatEta(eta)}.`,
         etaMinutes: eta,
+        paceKmh: Math.round(pace * 10) / 10,
+        paceMeasured: measured !== null,
         distanceKm: dist,
         sightingId: s.id,
         hydrophoneId: null,

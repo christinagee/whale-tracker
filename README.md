@@ -54,7 +54,7 @@ A lamp or other device can check this address every minute or so:
 | --- | --- | --- | --- |
 | 0 | none | off | Nothing relevant |
 | 1 | watch | amber, slow breathe | Orcas in Puget Sound within ~60 km of Seattle in the last 2 hr, direction unknown; or whale sounds on a nearby hydrophone in the last hour |
-| 2 | approaching | cyan, pulse | Orcas within ~60 km heading toward Seattle: "southbound" north of Seattle or "northbound" south of it, or later sightings getting closer. Includes an arrival estimate at ~7 km/h, usually 1–3 hr of warning |
+| 2 | approaching | cyan, pulse | Orcas within ~60 km heading toward Seattle: "southbound" north of Seattle or "northbound" south of it, or later sightings getting closer. Includes an arrival estimate using the pod's own pace toward Seattle, measured from its sightings over the last 2½ hr (median, kept between 1.5 and 10 km/h); with only one report it assumes 7 km/h, or 4 km/h if the report says slow/foraging |
 | 3 | here | blue, solid | Orcas within ~8 km of Seattle in the last 90 min |
 
 Hood Canal, whales heading away, and species other than orcas are ignored. The distances, speed, and home point are in `ALERT_CONFIG` in `src/lib/alert.ts`, and the website banner uses the same code.
