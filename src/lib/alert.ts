@@ -9,8 +9,21 @@ import type { Detection, Hydrophone } from '../api/orcasound.js'
 export const ALERT_CONFIG = {
   /** The spot we measure from: Elliott Bay, between Alki and Discovery Park. */
   home: { name: 'Seattle', latitude: 47.605, longitude: -122.4 },
-  /** Orcas this close count as "here" (12.5 km reaches north past Carkeek Park). */
-  hereKm: 12.5,
+  /**
+   * Places to go watch from. Orcas within spotKm of any of them count as "here", and arrival
+   * estimates are to the nearest one. North to south along Seattle's shoreline.
+   */
+  spots: [
+    { name: 'Richmond Beach', latitude: 47.7656, longitude: -122.3856 },
+    { name: 'Carkeek Park', latitude: 47.7118, longitude: -122.3795 },
+    { name: 'Golden Gardens', latitude: 47.6905, longitude: -122.403 },
+    { name: 'Discovery Park', latitude: 47.6619, longitude: -122.4356 },
+    { name: 'Elliott Bay', latitude: 47.605, longitude: -122.4 },
+    { name: 'Alki', latitude: 47.5763, longitude: -122.4206 },
+    { name: 'Lincoln Park', latitude: 47.531, longitude: -122.396 },
+  ],
+  /** Orcas this close to a spot are in view from it. */
+  spotKm: 5,
   /** Orcas in Puget Sound within this distance can trigger a heads-up. */
   approachKm: 60,
   /** Typical travelling speed, used for the arrival estimate when the pod's own pace isn't known. */
@@ -75,21 +88,34 @@ function whoLabel(s: Sighting): string {
   return pods.length > 0 ? `Orcas (${pods.map((p) => PODS[p].name).join(', ')})` : 'Orcas'
 }
 
+type Spot = (typeof ALERT_CONFIG)['spots'][number]
+
+/** How far outside the watching zone this point is (km; 0 or less = inside), and the nearest spot. */
+export function zoneDistance(p: Point, config = ALERT_CONFIG): { km: number; spot: Spot } {
+  let best = { km: Infinity, spot: config.spots[0] }
+  for (const spot of config.spots) {
+    const km = distanceKm(spot, p) - config.spotKm
+    if (km < best.km) best = { km, spot }
+  }
+  return best
+}
+
 const SLOW_WORDS = /\b(slow(ly)?|forag\w*|mill\w*|meander\w*|resting|logging|lingering)\b/i
 
 /**
- * How fast this group is actually closing in on Seattle (km/h), from its earlier sightings:
+ * How fast this group is actually closing in on the watching spots (km/h), from its earlier sightings:
  * reports 20 min to 2.5 hr before this one, within 15 km of it. Uses the median, so one odd
  * report doesn't throw it off, and keeps it within a sensible range. null if there's nothing to go on.
  */
-export function measuredPace(s: Sighting, orcas: Sighting[], home: Point, config = ALERT_CONFIG): number | null {
-  const dist = distanceKm(home, s)
+export function measuredPace(s: Sighting, orcas: Sighting[], config = ALERT_CONFIG): number | null {
+  const zone = (p: Point) => zoneDistance(p, config).km
+  const dist = zone(s)
   const speeds = orcas
     .filter((o) => {
       const gap = (s.time.getTime() - o.time.getTime()) / 60_000
       return o.id !== s.id && gap >= 20 && gap <= 150 && distanceKm(o, s) <= 15
     })
-    .map((o) => (distanceKm(home, o) - dist) / ((s.time.getTime() - o.time.getTime()) / 3_600_000))
+    .map((o) => (zone(o) - dist) / ((s.time.getTime() - o.time.getTime()) / 3_600_000))
     .sort((a, b) => a - b)
   if (speeds.length === 0) return null
   const mid = speeds.length / 2
@@ -148,13 +174,14 @@ export function computeAlert(
     const dist = distanceKm(home, s)
     const where = `${Math.round(dist)} km ${compassFrom(home, s)} of ${home.name}`
 
-    if (dist <= config.hereKm) {
+    const zone = zoneDistance(s, config)
+    if (zone.km <= 0) {
       if (age <= config.hereMaxAgeMin) {
         candidates.push({
           state: 'here',
           score: 3000 - age,
-          title: `${whoLabel(s)} in ${home.name} waters!`,
-          message: `${dist < 2 ? `Right off ${home.name}` : `About ${where}`}, reported ${Math.round(age)} min ago. Go look!`,
+          title: `${whoLabel(s)} near ${zone.spot.name}!`,
+          message: `${where}, reported ${Math.round(age)} min ago. Go look!`,
           etaMinutes: 0,
           distanceKm: dist,
           sightingId: s.id,
@@ -176,7 +203,7 @@ export function computeAlert(
         return o.id !== s.id && gap >= 15 && gap <= 180 && distanceKm(o, s) <= 15
       })
       if (earlier) {
-        const change = dist - distanceKm(home, earlier)
+        const change = zone.km - zoneDistance(earlier, config).km
         if (change < -1.5) towards = true
         else if (change > 1.5) towards = false
       }
@@ -185,17 +212,17 @@ export function computeAlert(
     if (towards === false) continue // heading away from Seattle
 
     // Their pace: measured from this group's own recent sightings when possible, otherwise a typical speed.
-    const measured = towards ? measuredPace(s, orcas, home, config) : null
+    const measured = towards ? measuredPace(s, orcas, config) : null
     const pace = measured ?? (SLOW_WORDS.test(s.comments) ? config.slowSwimKmh : config.swimKmh)
     // Subtract how far they've probably already travelled since the report.
-    const remaining = Math.max(dist - config.hereKm, 0) - (towards ? (pace * age) / 60 : 0)
+    const remaining = Math.max(zone.km, 0) - (towards ? (pace * age) / 60 : 0)
     if (towards) {
       const eta = roundEta(Math.max(remaining, 0) / pace * 60)
       candidates.push({
         state: 'approaching',
         score: 2000 - dist,
         title: `${whoLabel(s)} heading toward ${home.name}`,
-        message: `${heading ? `${heading[0].toUpperCase()}${heading.slice(1)}bound, ` : 'Moving closer, '}${where} (reported ${Math.round(age)} min ago). ${measured !== null ? `${paceWords(measured)}, so they` : 'They'} could reach ${home.name} in about ${formatEta(eta)}.`,
+        message: `${heading ? `${heading[0].toUpperCase()}${heading.slice(1)}bound, ` : 'Moving closer, '}${where} (reported ${Math.round(age)} min ago). ${measured !== null ? `${paceWords(measured)}, so they` : 'They'} could reach ${zone.spot.name} in about ${formatEta(eta)}.`,
         etaMinutes: eta,
         paceKmh: Math.round(pace * 10) / 10,
         paceMeasured: measured !== null,
