@@ -2,15 +2,15 @@
 // tested on its own; api/lamp.ts reads the bulb and the lamp's memory, then carries out the action.
 // Imports use .js extensions so Node can run this inside the Vercel function.
 //
-// The rule: when orcas get within about 30 minutes of Seattle, the lamp turns blue for 30 minutes,
+// The rule: when orcas get within about 45 minutes of Seattle, the lamp turns blue for 45 minutes,
 // then goes back to exactly what it was showing before (e.g. the LIFX "Natural" white).
 import type { Alert } from './alert.js'
 
 export const LAMP_CONFIG = {
   /** Turn blue once the estimated arrival is this close (or the orcas are already here). */
-  triggerEtaMinutes: 30,
+  triggerEtaMinutes: 45,
   /** How long the lamp stays blue. */
-  holdMinutes: 30,
+  holdMinutes: 45,
   /** The same orcas keep the alert going for a while; only light up again after this long without one. */
   rearmAfterQuietMinutes: 60,
   /** LIFX's "blue" (hue in degrees). Brightness is left as it was. */
@@ -48,7 +48,7 @@ export type LampAction =
   | { kind: 'remember'; memory: LampMemory; reason: string }
   | { kind: 'forget'; reason: string }
 
-/** Does this alert call for blue? Orcas about 30 minutes out, or already here. */
+/** Does this alert call for blue? Orcas about 45 minutes out, or already here. */
 export function wantsBlue(alert: Pick<Alert, 'state' | 'etaMinutes'>, config = LAMP_CONFIG): boolean {
   if (alert.state === 'here') return true
   return alert.state === 'approaching' && alert.etaMinutes !== null && alert.etaMinutes <= config.triggerEtaMinutes
@@ -69,7 +69,7 @@ export function colorString(b: BulbState): string {
 const minutes = (n: number) => n * 60_000
 
 export interface DecideOptions {
-  /** 'blue' starts (or restarts) the 30 minutes now; 'normal' goes back now. Used for testing. */
+  /** 'blue' starts (or restarts) the blue time now; 'normal' goes back now. Used for testing. */
   test?: 'blue' | 'normal'
   /** Override the hold time (testing). */
   holdMinutes?: number
@@ -78,9 +78,9 @@ export interface DecideOptions {
 }
 
 /**
- * - Orcas within ~30 minutes: turn blue (remembering the current setting), unless this lamp
+ * - Orcas within ~45 minutes: turn blue (remembering the current setting), unless this lamp
  *   already lit up for these orcas.
- * - 30 minutes later: go back to the remembered setting. If someone switched the lamp off in the
+ * - 45 minutes later: go back to the remembered setting. If someone switched the lamp off in the
  *   meantime, the setting comes back but it stays off.
  * - If someone changes the color while it's blue, it's theirs again: nothing is undone later.
  * - "Back to Natural" on the website (revert) ends the blue early; the same orcas won't relight it.
@@ -136,7 +136,7 @@ export function decideLamp(
         to: active.previous,
         keepOff,
         memory: seen({ ...active, done: true }),
-        reason: keepOff ? '30 minutes are up; setting restored (lamp stays off)' : '30 minutes are up; back to normal',
+        reason: keepOff ? `${config.holdMinutes} minutes are up; setting restored (lamp stays off)` : `${config.holdMinutes} minutes are up; back to normal`,
       }
     }
     const left = Math.ceil((new Date(active.until).getTime() - t) / 60_000)
@@ -144,7 +144,7 @@ export function decideLamp(
     return { kind: 'nothing', reason: `Blue for ${left} more min` }
   }
 
-  if (!trigger) return { kind: 'nothing', reason: 'No orcas within 30 minutes of Seattle' }
+  if (!trigger) return { kind: 'nothing', reason: `No orcas within ${config.triggerEtaMinutes} minutes of Seattle` }
 
   if (memory && t - new Date(memory.lastTriggerAt).getTime() < minutes(config.rearmAfterQuietMinutes)) {
     return { kind: 'remember', memory: seen(memory), reason: 'Already lit up for these orcas' }
@@ -153,6 +153,6 @@ export function decideLamp(
   return {
     kind: 'blue',
     memory: { startedAt: iso, until: new Date(t + hold).toISOString(), lastTriggerAt: iso, previous: bulb, done: false },
-    reason: 'Orcas within 30 minutes of Seattle: blue for 30 min',
+    reason: `Orcas within ${config.triggerEtaMinutes} minutes of Seattle: blue for ${Math.round(hold / 60_000)} min`,
   }
 }

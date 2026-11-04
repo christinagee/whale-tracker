@@ -1,7 +1,7 @@
 // Vercel serverless function: /api/lamp
 //
 //   GET  /api/lamp?key=<LAMP_SECRET>   called every minute by a scheduler (cron-job.org). When orcas
-//        get within about 30 minutes of Seattle, it turns a LIFX bulb blue for 30 minutes, then puts
+//        get within about 45 minutes of Seattle, it turns a LIFX bulb blue for 45 minutes, then puts
 //        it back exactly as it was.
 //   POST /api/lamp  {"password": "..."}  the website's "Back to Natural" button: ends the blue early.
 //        Needs LAMP_PASSWORD; after 10 wrong tries in an hour it stops accepting tries for that hour.
@@ -175,10 +175,10 @@ export async function GET(request: Request): Promise<Response> {
   const testParam = (url.searchParams.get('test') ?? '').toLowerCase()
   const test = TEST_BLUE.includes(testParam) ? 'blue' : TEST_NORMAL.includes(testParam) ? 'normal' : undefined
   const testMinutes = Number(url.searchParams.get('minutes'))
-  const holdMinutes = test === 'blue' && testMinutes >= 1 && testMinutes <= 30 ? testMinutes : undefined
+  const holdMinutes = test === 'blue' && testMinutes >= 1 && testMinutes <= 60 ? testMinutes : undefined
 
   try {
-    // Are orcas within about 30 minutes? (Reuses /api/alert, which the CDN caches for a minute.)
+    // Are orcas within about 45 minutes? (Reuses /api/alert, which the CDN caches for a minute.)
     let trigger = false
     let alertInfo: Pick<Alert, 'state' | 'etaMinutes' | 'title'> | null = null
     if (!test) {

@@ -9,8 +9,8 @@ import type { Detection, Hydrophone } from '../api/orcasound.js'
 export const ALERT_CONFIG = {
   /** The spot we measure from: Elliott Bay, between Alki and Discovery Park. */
   home: { name: 'Seattle', latitude: 47.605, longitude: -122.4 },
-  /** Orcas this close count as "here". */
-  hereKm: 8,
+  /** Orcas this close count as "here" (12.5 km reaches north past Carkeek Park). */
+  hereKm: 12.5,
   /** Orcas in Puget Sound within this distance can trigger a heads-up. */
   approachKm: 60,
   /** Typical travelling speed, used for the arrival estimate when the pod's own pace isn't known. */
